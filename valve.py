@@ -20,7 +20,7 @@ class VCMini:
         self.address(0)
         # Set an initial parameter set
         self.active_parameter_set(0)
-        
+
         self.eeprom = EEPROM()
         print(self.eeprom.addr[0].params[7])
         self.eeprom.addr[0].params[7].cycle_time = 1000
@@ -40,100 +40,97 @@ class VCMini:
 
     def peak_time(self, set = None, override_limits = False):
         if(set is None):
-            return self.read_value(b'a')
+            return self.query(b'a')
         else:
             if(set < 100 or set  > 500) and not override_limits:
                 raise ValueError("Peak time must be between 100 and 500 us")
-            return self.write_value(b'A', set)
+            return self.set_parameter(b'A', set)
 
     def open_time(self, set = None, override_limits = False):
         if(set is None):
-            return self.read_value(b'b')
+            return self.query(b'b')
         else:
             if (set < 400 or set > 9999999) and not override_limits:
                 raise ValueError("Open time must be between 400 and 9999999 us")
-            self.write_value(b'B', set)
+            self.set_parameter(b'B', set)
 
     def cycle_time(self, set = None):
         if(set is None):
-            return self.read_value(b'c')
+            return self.query(b'c')
         else:
             if set < 10 or set > 9999999:
                 raise ValueError("Cycle time must be between 10 and 9999999 us")
-            return self.write_value(b'C', set)
+            return self.set_parameter(b'C', set)
     
     def peak_current(self, set = None):
         if(set is None):
-            return self.read_value(b'd')
+            return self.query(b'd')
         else:
             if set < 0 or set > 15:
                 raise ValueError("Peak current must be between 0 and 15")
-            return self.write_value(b'D', set)
+            return self.set_parameter(b'D', set)
         
     def num_shots(self, set = None):
         if(set is None):
-            return self.read_value(b'g')
+            return self.query(b'g')
         else:
             if set < 0 or set > 65535:
                 raise ValueError("Number of shots must be between 0 and 65535")
-            return self.write_value(b'G', set)
+            return self.set_parameter(b'G', set)
 
     def valve_status(self):
         """Returns the active status for each of the two valves as a tuple"""
-        v = self.read_value(b'q')
+        v = self.query(b'q')
         return (v & 0x10, v & 0x01)
     
     def shot_counter(self, valve):
         """Returns the shot counter for the specified valve"""
         if valve == 0:
-            return self.read_value(b'y')
+            return self.query(b'y')
         elif valve == 1:
-            return self.read_value(b'z')
+            return self.query(b'z')
         else:
             raise Exception("Invalid valve number")
 
     def total_shot_counter(self, valve):
         """Returns the total shot counter for the specified valve"""
         if valve == 0:
-            high = self.read_value(b'u')
-            low = self.read_value(b'v')
+            high = self.query(b'u')
+            low = self.query(b'v')
             return (high<<24) | low
         elif valve == 1:
-            high = self.read_value(b'w')
-            low = self.read_value(b'x')
+            high = self.query(b'w')
+            low = self.query(b'x')
             return (high<<24) | low
         else:
             raise ValueError("Invalid valve number")
 
     def address(self, set = None):
         if(set is not None):
-            return self.set_value(b'*', set)
+            return self.set_parameter(b'*', set)
         else:
-            return self.read_value(b'=')
+            return self.query(b'=')
 
     def active_parameter_set(self, set = None):
         if(set is None):
-            return self.read_value(b'p')
+            return self.query(b'p')
         else:
             if set < 0 or set > 7:
                 raise ValueError("Active parameter set must be between 0 and 7")
-            return self.set_value(b'n', set)
-        
+            return self.query(b'n', set)
 
-    def read_value(self, param):
+    def execute(self, param):
         if len(param) != 1:
             raise ValueError("Invalid parameter")
         self.ser.write(b'%c' % param)
         line = self.ser.readline()
-        if(line[:2] != b'.%c' % param):
-            raise Exception("Error reading %c" % (param))
+        if(line[:2] != b'%c' % param):
+            raise Exception("Error reading %c. Got %s" % (param, line))
         prompt = self.ser.read(2)
         if(prompt != b'\r>'):
             raise Exception("Error reading %c" % (param))
-        value = int(line[2:-1])
-        return value
-    
-    def set_value(self, param, value):
+
+    def set_parameter(self, param, value):
         if len(param) != 1:
             raise ValueError("Invalid parameter")
         if(not isinstance(value, int)):
@@ -141,13 +138,37 @@ class VCMini:
         
         self.ser.write(b'%d%c' % (value,param))
         line = self.ser.readline()
-        if(line[:2] != b'%d.%c' % (value,param)):
-            raise Exception("Error reading %c" % (param))
+
+        if(line[:2] != b'%d%c' % (value,param)):
+                raise Exception("Error reading %c" % (param))
         prompt = self.ser.read(2)
         if(prompt != b'\r>'):
             raise Exception("Error reading %c" % (param))
         value = int(line[2:-1])
-        return value    
+        return value
+                    
+    def query(self, param, value=None):
+        if len(param) != 1:
+            raise ValueError("Invalid parameter")
+        if(value is None):
+            self.ser.write(b'%c' % param)
+            output = b'.%c' % (param)
+        else:
+            if(not isinstance(value, int)):
+                raise ValueError("Value must be an integer")
+            if(param != b'n'):
+                raise ValueError("Value can only be set when param=b'n'")
+            self.ser.write(b'%d%c' % (value,param))
+            output = b'%d.%c' % (value, param)
+        line = self.ser.readline()
+
+        if(line[:2] != output):
+            raise Exception("Error reading %c. Got %s" % (param,line))
+        prompt = self.ser.read(2)
+        if(prompt != b'\r>'):
+            raise Exception("Error reading %c" % (param))
+        value = int(line[len(output):-1])
+        return value
 
 @dataclass
 class ValveParameters:
