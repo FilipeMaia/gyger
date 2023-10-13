@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Tuple
 
 class VCMini:
-    def __init__(self, port = 'COM1', baudrate=38400, timeout_s=1):
+    def __init__(self, port = 'COM6', baudrate=38400, timeout_s=1):
         # Open communication with valve controller VC-Mini
         ser = serial.Serial()
         ser.baudrate = baudrate
@@ -12,11 +12,15 @@ class VCMini:
         ser.bytesize = serial.EIGHTBITS
         ser.stopbits = serial.STOPBITS_ONE
         ser.timeout = timeout_s # seconds
-        if(0):
-            ser.open()
-            assert ser.is_open == True, "Serial port failed to open"
+        ser.open()
+        if(ser.is_open != True):
+            raise ConnectionError("Serial port failed to open")
         self.ser = ser
-                
+        # Set an initial address        
+        self.address(0)
+        # Set an initial parameter set
+        self.active_parameter_set(0)
+        
         self.eeprom = EEPROM()
         print(self.eeprom.addr[0].params[7])
         self.eeprom.addr[0].params[7].cycle_time = 1000
@@ -34,26 +38,45 @@ class VCMini:
         self.ram.num_shots = self.num_shots()
 
 
-    def peak_time(self, set = None):
+    def peak_time(self, set = None, override_limits = False):
         if(set is None):
             return self.read_value(b'a')
         else:
-            return self.write_value(b'a', set)
+            if(set < 100 or set  > 500) and not override_limits:
+                raise ValueError("Peak time must be between 100 and 500 us")
+            return self.write_value(b'A', set)
 
-    def open_time(self):
-        return self.read_value(b'b')
+    def open_time(self, set = None, override_limits = False):
+        if(set is None):
+            return self.read_value(b'b')
+        else:
+            if (set < 400 or set > 9999999) and not override_limits:
+                raise ValueError("Open time must be between 400 and 9999999 us")
+            self.write_value(b'B', set)
+
+    def cycle_time(self, set = None):
+        if(set is None):
+            return self.read_value(b'c')
+        else:
+            if set < 10 or set > 9999999:
+                raise ValueError("Cycle time must be between 10 and 9999999 us")
+            return self.write_value(b'C', set)
     
-    def cycle_time(self):
-        return self.read_value(b'c')
-    
-    def peak_current(self):
-        return self.read_value(b'd')
-
-    def num_shots(self):
-        return self.read_value(b'g')
-
-    def active_parameter_set(self):
-        return self.read_value(b'p')
+    def peak_current(self, set = None):
+        if(set is None):
+            return self.read_value(b'd')
+        else:
+            if set < 0 or set > 15:
+                raise ValueError("Peak current must be between 0 and 15")
+            return self.write_value(b'D', set)
+        
+    def num_shots(self, set = None):
+        if(set is None):
+            return self.read_value(b'g')
+        else:
+            if set < 0 or set > 65535:
+                raise ValueError("Number of shots must be between 0 and 65535")
+            return self.write_value(b'G', set)
 
     def valve_status(self):
         """Returns the active status for each of the two valves as a tuple"""
@@ -80,11 +103,26 @@ class VCMini:
             low = self.read_value(b'x')
             return (high<<24) | low
         else:
-            raise Exception("Invalid valve number")
+            raise ValueError("Invalid valve number")
+
+    def address(self, set = None):
+        if(set is not None):
+            return self.set_value(b'*', set)
+        else:
+            return self.read_value(b'=')
+
+    def active_parameter_set(self, set = None):
+        if(set is None):
+            return self.read_value(b'p')
+        else:
+            if set < 0 or set > 7:
+                raise ValueError("Active parameter set must be between 0 and 7")
+            return self.set_value(b'n', set)
+        
 
     def read_value(self, param):
         if len(param) != 1:
-            raise Exception("Invalid parameter")
+            raise ValueError("Invalid parameter")
         self.ser.write(b'%c' % param)
         line = self.ser.readline()
         if(line[:2] != b'.%c' % param):
@@ -92,20 +130,23 @@ class VCMini:
         prompt = self.ser.read(2)
         if(prompt != b'\r>'):
             raise Exception("Error reading %c" % (param))
-        value = int(line[2:])
+        value = int(line[2:-1])
         return value
     
     def set_value(self, param, value):
         if len(param) != 1:
-            raise Exception("Invalid parameter")
+            raise ValueError("Invalid parameter")
+        if(not isinstance(value, int)):
+            raise ValueError("Value must be an integer")
+        
         self.ser.write(b'%d%c' % (value,param))
         line = self.ser.readline()
-        if(line[:2] != b'.%d%c' % (value,param)):
+        if(line[:2] != b'%d.%c' % (value,param)):
             raise Exception("Error reading %c" % (param))
         prompt = self.ser.read(2)
         if(prompt != b'\r>'):
             raise Exception("Error reading %c" % (param))
-        value = int(line[2:])
+        value = int(line[2:-1])
         return value    
 
 @dataclass
@@ -127,7 +168,5 @@ class ParameterSet:
 class EEPROM:
     """Set of 9 parameter sets."""
     addr: Tuple[ParameterSet] = tuple(ParameterSet() for i in range(9))
-
-test = VCMini()
 
 
