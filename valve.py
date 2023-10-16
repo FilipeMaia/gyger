@@ -143,7 +143,7 @@ class VCMini:
         line = self.ser.readline()
 
         if(line[:-1] != b'%d%c' % (value,param)):
-                raise Exception("Error reading %s" % (param))
+                raise Exception("Error reading %s. Got %s" % (param, line))
         prompt = self.ser.read(2)
         if(prompt != b'\r>'):
             raise Exception("Error reading %s" % (param))
@@ -172,7 +172,7 @@ class VCMini:
             raise Exception("Error reading %c" % (param))
         
         if(value is None):
-            value = int(line[len(output):-1])
+            value = line[len(output):-1]
             try:
                 # Some return values are not integers
                 value = int(value)
