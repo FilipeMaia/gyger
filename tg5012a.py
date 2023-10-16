@@ -32,11 +32,6 @@ class TG5012A:
     def id(self):
         """Returns the ID string of the instrument"""
         return self.query("*IDN?")
-
-    def query(self, cmd):
-        self.sock.send(cmd.encode('ascii') + self.terminator)
-        recv = self.sock.recv(1024)
-        return recv.decode('ascii').strip()
     
     def wait_for_completion(self):
         """Waits for the instrument to complete its tasks"""
