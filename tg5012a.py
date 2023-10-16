@@ -16,13 +16,16 @@ class TG5012A:
         self.sock.send(cmd.encode('ascii') + self.terminator)
         recv = self.sock.recv(1024)
         ret = recv.decode('ascii').strip()
-        if(self.auto_local):
+        if(self.auto_local and cmd != "LOCAL"):
             self.local()
         return ret
     
-    def execute(self, cmd):
-        ret = self.sock.send(cmd.encode('ascii') + self.terminator)   
-        if(self.auto_local):
+    def set(self, cmd, value=None):
+        if(value is None):
+            ret = self.sock.send(cmd.encode('ascii') + self.terminator)   
+        else:
+            ret = self.sock.send(cmd.encode('ascii') + b' ' + value.encode('ascii') + self.terminator)  
+        if(self.auto_local and cmd != "LOCAL"):
             self.local()        
         return ret
     
@@ -41,4 +44,4 @@ class TG5012A:
     
     def local(self):
         """Sets the instrument to local mode"""
-        return self.execute("LOCAL")
+        return self.set("LOCAL")
