@@ -109,7 +109,10 @@ class VCMini:
         if(set is not None):
             return self.set_parameter(b'*', set)
         else:
-            return self.query(b'=')
+            value = self.query(b'=')
+            addr = int(value[0])
+            module_type = value[1:]
+            return addr, module_type
 
     def active_parameter_set(self, set = None):
         if(set is None):
@@ -125,10 +128,10 @@ class VCMini:
         self.ser.write(b'%c' % param)
         line = self.ser.readline()
         if(line[:2] != b'%c' % param):
-            raise Exception("Error reading %c. Got %s" % (param, line))
+            raise Exception("Error reading %s. Got %s" % (param, line))
         prompt = self.ser.read(2)
         if(prompt != b'\r>'):
-            raise Exception("Error reading %c" % (param))
+            raise Exception("Error reading %s" % (param))
 
     def set_parameter(self, param, value):
         if len(param) != 1:
@@ -139,12 +142,12 @@ class VCMini:
         self.ser.write(b'%d%c' % (value,param))
         line = self.ser.readline()
 
-        if(line[:2] != b'%d%c' % (value,param)):
-                raise Exception("Error reading %c" % (param))
+        if(line[:-1] != b'%d%c' % (value,param)):
+                raise Exception("Error reading %s" % (param))
         prompt = self.ser.read(2)
         if(prompt != b'\r>'):
-            raise Exception("Error reading %c" % (param))
-        value = int(line[2:-1])
+            raise Exception("Error reading %s" % (param))
+        value = int(line[-2])
         return value
                     
     def query(self, param, value=None):
@@ -162,12 +165,20 @@ class VCMini:
             output = b'%d.%c' % (value, param)
         line = self.ser.readline()
 
-        if(line[:2] != output):
+        if(line[:len(output)] != output):
             raise Exception("Error reading %c. Got %s" % (param,line))
         prompt = self.ser.read(2)
         if(prompt != b'\r>'):
             raise Exception("Error reading %c" % (param))
-        value = int(line[len(output):-1])
+        
+        if(value is None):
+            value = int(line[len(output):-1])
+            try:
+                # Some return values are not integers
+                value = int(value)
+            except ValueError:
+                pass
+
         return value
 
 @dataclass
