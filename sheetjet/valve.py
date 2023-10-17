@@ -3,11 +3,11 @@ from dataclasses import dataclass
 from typing import Tuple
 
 class VCMini:
-    def __init__(self, port = 'COM6', baudrate=38400, timeout_s=1):
+    def __init__(self, serial_port = 'COM6', baudrate=38400, timeout_s=1):
         # Open communication with valve controller VC-Mini
         ser = serial.Serial()
         ser.baudrate = baudrate
-        ser.port = port
+        ser.port = serial_port
         ser.parity = serial.PARITY_NONE
         ser.bytesize = serial.EIGHTBITS
         ser.stopbits = serial.STOPBITS_ONE

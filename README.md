@@ -25,9 +25,9 @@ import sheetjet
 devices = sheetjet.discover()
 
 # Initialize the devices
-vcmini = sheetjet.VCMini(serial_port=devices['VCMini'])
-func_gen = sheetjet.TG5012A(serial_port=devices['TG5012A'])
-mxii = sheetjet.MXII(serial_port=devices['MXII'])
+vcmini = sheetjet.VCMini(serial_port=devices['VCMini'].device)
+func_gen = sheetjet.TG5012A(serial_port=devices['TG5012A'].device)
+mxii = sheetjet.MXII(serial_port=devices['MXII'].device)
 
 # You can start to interact with them
 print(func_gen.id())
