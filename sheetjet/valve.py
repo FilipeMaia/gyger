@@ -110,7 +110,7 @@ class VCMini:
             return self.set_parameter(b'*', set)
         else:
             value = self.query(b'=')
-            addr = int(value[0])
+            addr = value[0]
             module_type = value[1:]
             return addr, module_type
 
