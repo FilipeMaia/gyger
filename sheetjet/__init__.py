@@ -3,3 +3,4 @@ from .valve import VCMini
 from .mxii import MXII
 from .discovery import discover
 
+__version__ = '0.1.0'

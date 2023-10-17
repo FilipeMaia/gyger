@@ -1,0 +1,21 @@
+[project]
+name = "sheetjet"
+
+description = "Controls valves and devices used for liquid sheet jets"
+authors = [
+    {name = "Filipe Maia", email = "filipe.c.maia@gmail.com"},
+]
+readme = "README.md"
+license = {text = "BSD-3-Clause"}
+requires-python = ">=3.7"
+dependencies = [
+    "pyserial",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+
+dynamic = ["version"]
+
+[tool.setuptools.dynamic]
+version = {attr = "sheetjet.__version__"}

@@ -17,7 +17,7 @@ def discover(config_file = 'sheetjet.ini', save_config = True, load_config = Tru
     ret = None
     if(load_config):
         ret = read_config(config_file)
-        if None not in ret.values():
+        if ret is not None and None not in ret.values():
             return ret
         
     print('Performing manual USB address search.')
@@ -28,6 +28,30 @@ def discover(config_file = 'sheetjet.ini', save_config = True, load_config = Tru
             ret[d] = discover_device(d)
     if save_config:
         write_config(ret, config_file)
+    return ret
+
+def discover_device(name):
+    print('Searching for %s' % (name))
+    input('    Unplug the USB/Serial cable connected to %s. Press Enter when unplugged...' %(name))
+    before = list_ports.comports()
+    logging.debug('Devices found after unplugging:\n%s' %(format_devices_found(before)))
+    input('    Reconnect the cable. Press Enter when the cable has been plugged in...')
+    after = list_ports.comports()
+    logging.debug('Devices found after replugging:\n%s' %(format_devices_found(after)))
+    port = [i for i in after if i not in before]
+    if(len(port) == 1):
+        return DeviceInfo(port[0].device, port[0].hwid)
+    elif(len(port) == 0):
+        raise ConnectionError('No device found.')
+    
+    if(len(port) != 1):
+        raise ConnectionError('Multiple devices changed!')
+    return None
+
+def format_devices_found(comports):
+    ret = ''
+    for p in comports:
+        ret += "device:%s hwid:%s\n" % (p.device, p.hwid)
     return ret
 
 def write_config(devices, config_file):
@@ -45,8 +69,11 @@ def read_config(config_file, check_against_ports = True):
     except:
         logging.warning('Could not read config file %s' %(config_file))
         return None
+    if(config.sections() == []):
+        # Got empty config
+        return None
     ret = {}
-    for d in config:
+    for d in config.sections():
         ret[d] = DeviceInfo.from_config(config[d]) 
 
     if(check_against_ports is False):
@@ -56,37 +83,30 @@ def read_config(config_file, check_against_ports = True):
     for d in ['VCMini', 'TG5012A', 'MXII']:
         found = False
         for p in ports:
-            if(p.serial_number == ret[d].serial_number):
-                logging.debug('Found %s with serial_number %s and hwid %s at %s' %(d, p.serial_number, p.hwid, p.device))
+            if(p.hwid == ret[d].hwid):
+                logging.debug('Found %s with hwid %s at %s' %(d, p.hwid, p.device))
                 found = True
                 continue
         if found == False:
-            logging.warning('Could not find %s with serial_number %s and hwid %s' %(d, ret[d].serial_number, ret[d].hwid))
-            config[d] = None
-    return config
+            logging.warning('Could not find %s with hwid %s' %(d, ret[d].hwid))
+            ret[d] = None
+    return ret
 
-def discover_device(name):
-    print('Searching for %s' % (name))
-    input('    Unplug the USB/Serial cable connected to %s. Press Enter when unplugged...' %(name))
-    before = list_ports.comports()
-    input('    Reconnect the cable. Press Enter when the cable has been plugged in...')
-    after = list_ports.comports()
-    port = [i for i in after if i not in before]
-    if(len(port) == 1):
-        return DeviceInfo(port[0].device, port[0].hwid, port[0].serial_number)
-    elif(len(port) == 0):
-        raise ConnectionError('No device found.')
-    
-    if(len(port) != 1):
-        raise ConnectionError('Multiple devices changed!')
-    return None
 
 class DeviceInfo:
-    def __init__(self, device, hwid, serial_number):
+    def __init__(self, device, hwid):
         self.device = device
         self.hwid = hwid
-        self.serial_number = serial_number
     
     @classmethod
     def from_config(cls, config):
-        return cls(config['device'], config['hwid'], config['serial_number'])
+        if all(k in config for k in ('device', 'hwid')):
+            return cls(config['device'], config['hwid'])
+        else:
+            return None
+    
+    def __str__(self):
+        return 'device=%s hwid=%s' % (self.device, self.hwid)
+
+    def __repr__(self):
+        return 'DeviceInfo(device=%s, hwid=%s)' % (self.device, self.hwid)
