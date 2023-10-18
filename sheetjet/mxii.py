@@ -13,7 +13,7 @@ class MXII:
         ser = serial.Serial(port = serial_port, baudrate = baudrate, timeout = timeout_s)      
         if(ser.is_open != True):
             raise ConnectionError("Serial port failed to open")
-        
+        self.ser = ser
         self.terminator = '\r'
 
     def port(self, port = None):

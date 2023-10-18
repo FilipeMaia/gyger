@@ -14,6 +14,7 @@ class TG5012A:
         self.terminator = b'\n'
         self.ser = None
         self.sock = None
+        self.auto_local = auto_local
         if serial_port is not None:
             # Prefer serial over LAN communication        
             ser = serial.Serial(port = serial_port)
@@ -25,7 +26,6 @@ class TG5012A:
             # Open LAN connection
             self.sock = socket.socket()
             self.sock.connect((address, port))
-            self.auto_local = auto_local
             logging.info("Successfully connected to %s:%d" % (address, port))
         print(self.id())
 
