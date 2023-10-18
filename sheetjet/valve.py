@@ -1,6 +1,7 @@
 import serial
 from dataclasses import dataclass
 from typing import Tuple
+import logging
 
 class VCMini:
     def __init__(self, serial_port = 'COM6', baudrate=38400, timeout_s=1):
@@ -46,29 +47,29 @@ class VCMini:
     def peak_time(self, set = None, override_limits = False):
         """Query or set peak current time to initiate valve opening, in us."""
         if(set is None):
-            return self.query(b'a')
+            return self.query('a')
         else:
             if(set < 100 or set  > 500) and not override_limits:
                 raise ValueError("Peak time must be between 100 and 500 us")
-            return self.set_parameter(b'A', set)
+            return self.set_parameter('A', set)
 
     def open_time(self, set = None, override_limits = False):
         """Query or set valve open time in us."""
         if(set is None):
-            return self.query(b'b')
+            return self.query('b')
         else:
             if (set < 400 or set > 9999999) and not override_limits:
                 raise ValueError("Open time must be between 400 and 9999999 us")
-            self.set_parameter(b'B', set)
+            self.set_parameter('B', set)
 
     def cycle_time(self, set = None):
         """Query or set firing frequency in us."""
         if(set is None):
-            return self.query(b'c')
+            return self.query('c')
         else:
             if set < 10 or set > 9999999:
                 raise ValueError("Cycle time must be between 10 and 9999999 us")
-            return self.set_parameter(b'C', set)
+            return self.set_parameter('C', set)
     
     def peak_current(self, set = None):
         """
@@ -77,24 +78,24 @@ class VCMini:
         Should be kept at 1 A (meaning value 11).
         """
         if(set is None):
-            return self.query(b'd')
+            return self.query('d')
         else:
             if set < 0 or set > 15:
                 raise ValueError("Peak current must be between 0 and 15")
-            return self.set_parameter(b'D', set)
+            return self.set_parameter('D', set)
         
     def num_shots(self, set = None):
         """Query or set number of shots to fire before stopping. 0 means infinite."""
         if(set is None):
-            return self.query(b'g')
+            return self.query('g')
         else:
             if set < 0 or set > 65535:
                 raise ValueError("Number of shots must be between 0 and 65535")
-            return self.set_parameter(b'G', set)
+            return self.set_parameter('G', set)
 
     def valve_status(self):
         """Returns the active status for each of the two valves as a tuple."""
-        v = self.query(b'q')
+        v = self.query('q')
         return (v & 0x10, v & 0x01)
     
     def shot_counter(self, valve):
@@ -103,30 +104,30 @@ class VCMini:
         The shot counter is volatile, at power-on it is set to 0.
         """
         if valve == 0:
-            return self.query(b'y')
+            return self.query('y')
         elif valve == 1:
-            return self.query(b'z')
+            return self.query('z')
         else:
             raise Exception("Invalid valve number")
         
     def zero_shot_counter(self, valve):
         """Zero the shot counter for the specified valve."""
         if valve == 0:
-            return self.execute(b'I')
+            return self.execute('I')
         elif valve == 1:
-            return self.execute(b'J')
+            return self.execute('J')
         else:
             raise ValueError("Invalid valve number")
 
     def total_shot_counter(self, valve):
         """Returns the total shot counter for the specified valve."""
         if valve == 0:
-            high = self.query(b'u')
-            low = self.query(b'v')
+            high = self.query('u')
+            low = self.query('v')
             return (high<<24) | low
         elif valve == 1:
-            high = self.query(b'w')
-            low = self.query(b'x')
+            high = self.query('w')
+            low = self.query('x')
             return (high<<24) | low
         else:
             raise ValueError("Invalid valve number")
@@ -137,12 +138,15 @@ class VCMini:
         Returns the module address and module type as a tuple.
         """
         if(set is not None):
-            return self.set_parameter(b'*', set)
+            return self.set_parameter('*', set)
         else:
-            value = self.query(b'=')
+            value = self.query('=')
+            if(len(value) != 2):
+                return value
             addr = value[0]
             module_type = value[1:]
             return addr, module_type
+            
 
     def load_parameters(self, position = None):
         """
@@ -150,11 +154,11 @@ class VCMini:
         If position is `None` return the current parameters position.
         """
         if(position is None):
-            return self.query(b'p')
+            return self.query('p')
         else:
             if position < 0 or position > 7:
                 raise ValueError("Parameter position must be between 0 and 7")
-            return self.query(b'n', position)
+            return self.query('n', position)
 
     def save_parameters(self, position = None):
         """
@@ -162,18 +166,18 @@ class VCMini:
         If position is `None` return the current parameters position.
         """
         if(position is None):
-            return self.query(b'p')
+            return self.query('p')
         else:
             if position < 0 or position > 7:
                 raise ValueError("Parameter position must be between 0 and 7")
-            return self.set_parameter(b'N', position)
+            return self.set_parameter('N', position)
             
-    SINGLE = b'X'
-    PULSE = b'T'
-    SERIES = b'P'
-    PULSE_SERIES = b'L'
-    NONE = b'S'
-    def trigger_mode(self, trigger=None):
+    SINGLE = 'X'
+    PULSE = 'T'
+    SERIES = 'P'
+    PULSE_SERIES = 'L'
+    NONE = 'S'
+    def trigger_mode(self, mode=None):
         """
         Set the trigger mode.
 
@@ -182,27 +186,27 @@ class VCMini:
 
         Parameters
         ----------
-        trigger: {VCMini.SINGLE, VCMini.PULSE, VCMini.SERIES, VCMini.PULSE_SERIES, VCMini.NONE}
+        mode: {VCMini.SINGLE, VCMini.PULSE, VCMini.SERIES, VCMini.PULSE_SERIES, VCMini.NONE}
         * VCMini.SINGLE : Arm single shot on valves V1 and V2 triggered via external hardware trigger
         * VCMini.PULSE : Arm single shot on valves V1 and V2 with the opening time controlled by the length of the external hardware trigger
         * VCMini.SERIES : Arm shot series on valves V1 and V2 triggered via external hardware trigger
         * VCMini.PULSE_SERIES : Arm shot series on valves V1 and V2 which continues for as long as the external hardware trigger stays high
         * VCMini.NONE : Exit external trigger mode and disarm all triggers
         """
-        if trigger is None:
-            trigger = VCMini.NONE
-        if trigger not in [VCMini.SINGLE, VCMini.PULSE, VCMini.SERIES, VCMini.PULSE_SERIES, VCMini.NONE]:
+        if mode is None:
+            mode = VCMini.NONE
+        if mode not in [VCMini.SINGLE, VCMini.PULSE, VCMini.SERIES, VCMini.PULSE_SERIES, VCMini.NONE]:
             raise ValueError("Invalid trigger mode")
-        return self.execute(trigger)
+        return self.execute(mode)
     
-    V1 = b'Y'
-    V2 = b'Z'
-    V1V2 = b'V'
-    SERIES_V1 = b'Q'
-    SERIES_V2 = b'R'
-    FOREVER_V1V2 = b'U'
-    STOP = b'S'
-    def fire(self, mode=None):
+    V1 = 'Y'
+    V2 = 'Z'
+    V1V2 = 'V'
+    SERIES_V1 = 'Q'
+    SERIES_V2 = 'R'
+    FOREVER_V1V2 = 'U'
+    STOP = 'S'
+    def fire(self, shot=None):
         """
         Open the valves according to the specified mode using a software trigger.
 
@@ -211,7 +215,7 @@ class VCMini:
 
         Parameters
         ----------
-        mode: {VCMini.V1, VCMini.V2, VCMini.V1V2, 
+        shot: {VCMini.V1, VCMini.V2, VCMini.V1V2, 
         VCMini.SERIES_V1, VCMini.SERIES_V2,
         VCMini.FOREVER_V1V2, VCMini.STOP}
         * VCMini.V1 : Single shot of the V1 valve
@@ -222,11 +226,11 @@ class VCMini:
         * VCMini.FOREVER_V1V2 : Series of shots of both valves until until VCMini.STOP is issued
         * VCMini.STOP : Stop any series of shots
         """
-        if mode is None:
+        if shot is None:
             mode = VCMini.STOP
-        if mode not in [VCMini.V1, VCMini.V2, VCMini.V1V2, VCMini.SERIES_V1, VCMini.SERIES_V2, VCMini.FOREVER_V1V2, VCMini.STOP]:
+        if shot not in [VCMini.V1, VCMini.V2, VCMini.V1V2, VCMini.SERIES_V1, VCMini.SERIES_V2, VCMini.FOREVER_V1V2, VCMini.STOP]:
             raise ValueError("Invalid trigger mode")
-        return self.execute(mode)
+        return self.execute(shot)
 
 
     
@@ -238,12 +242,15 @@ class VCMini:
         """
         if len(param) != 1:
             raise ValueError("Invalid parameter")
-        self.ser.write(b'%c' % param)
-        line = self.ser.readline()
-        if(line[:2] != b'%c' % param):
-            raise Exception("Error reading %s. Got %s" % (param, line))
-        prompt = self.ser.read(2)
-        if(prompt != b'\r>'):
+        self.ser.write(param.encode('ascii'))
+        line = self.ser.readline().decode('ascii').strip()
+        if(line != param):
+            if line == '?':
+                logging.warning('Valve is busy!')
+            else:            
+                raise Exception("Error reading %s. Got %s" % (param, line))
+        prompt = self.ser.read(2).decode('ascii')
+        if(prompt != '\r>'):
             raise Exception("Error reading %s" % (param))
 
     def set_parameter(self, param, value):
@@ -256,13 +263,16 @@ class VCMini:
         if(not isinstance(value, int)):
             raise ValueError("Value must be an integer")
         
-        self.ser.write(b'%d%c' % (value,param))
-        line = self.ser.readline()
+        self.ser.write(('%d%s' % (value,param)).encode('ascii'))
+        line = self.ser.readline().decode('ascii').strip()
 
-        if(line[:-1] != b'%d%c' % (value,param)):
+        if(line != '%d%s' % (value,param)):
+            if line == '?':
+                logging.warning('Valve is busy!')
+            else:                
                 raise Exception("Error reading %s. Got %s" % (param, line))
-        prompt = self.ser.read(2)
-        if(prompt != b'\r>'):
+        prompt = self.ser.read(2).decode('ascii')
+        if(prompt != '\r>'):
             raise Exception("Error reading %s" % (param))
         value = int(line[-2])
         return value
@@ -275,25 +285,28 @@ class VCMini:
         if len(param) != 1:
             raise ValueError("Invalid parameter")
         if(value is None):
-            self.ser.write(b'%c' % param)
-            output = b'.%c' % (param)
+            self.ser.write(param.encode('ascii'))
+            output = '.%s' % (param)
         else:
             if(not isinstance(value, int)):
                 raise ValueError("Value must be an integer")
-            if(param != b'n'):
-                raise ValueError("Value can only be set when param=b'n'")
-            self.ser.write(b'%d%c' % (value,param))
-            output = b'%d.%c' % (value, param)
-        line = self.ser.readline()
+            if(param != 'n'):
+                raise ValueError("Value can only be set when param='n'")
+            self.ser.write(('%d%s' % (value,param)).encode('ascii'))
+            output = '%d.%s' % (value, param)
+        line = self.ser.readline().decode('ascii').strip()
 
         if(line[:len(output)] != output):
-            raise Exception("Error reading %c. Got %s" % (param,line))
-        prompt = self.ser.read(2)
-        if(prompt != b'\r>'):
-            raise Exception("Error reading %c" % (param))
+            if line == '?':
+                logging.warning('Valve is busy!')
+            else:
+                raise Exception("Error reading %s. Got %s" % (param,line))
+        prompt = self.ser.read(2).decode('ascii')
+        if(prompt != '\r>'):
+            raise Exception("Error reading %s" % (param))
         
         if(value is None):
-            value = line[len(output):-1]
+            value = line[len(output):]
             try:
                 # Some return values are not integers
                 value = int(value)
