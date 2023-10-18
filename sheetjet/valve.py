@@ -4,7 +4,12 @@ from typing import Tuple
 
 class VCMini:
     def __init__(self, serial_port = 'COM6', baudrate=38400, timeout_s=1):
-        # Open communication with valve controller VC-Mini
+        """
+        Open communication with valve controller VC-Mini
+
+        Also sets the module address to 0, active parameter set to 0 and 
+        reads the current parameters loaded.
+        """
         ser = serial.Serial()
         ser.baudrate = baudrate
         ser.port = serial_port
@@ -19,7 +24,7 @@ class VCMini:
         # Set an initial address        
         self.address(0)
         # Set an initial parameter set
-        self.active_parameter_set(0)
+        self.load_parameters(0)
 
         self.eeprom = EEPROM()
         print(self.eeprom.addr[0].params[7])
@@ -39,6 +44,7 @@ class VCMini:
 
 
     def peak_time(self, set = None, override_limits = False):
+        """Query or set peak current time to initiate valve opening, in us."""
         if(set is None):
             return self.query(b'a')
         else:
@@ -47,6 +53,7 @@ class VCMini:
             return self.set_parameter(b'A', set)
 
     def open_time(self, set = None, override_limits = False):
+        """Query or set valve open time in us."""
         if(set is None):
             return self.query(b'b')
         else:
@@ -55,6 +62,7 @@ class VCMini:
             self.set_parameter(b'B', set)
 
     def cycle_time(self, set = None):
+        """Query or set firing frequency in us."""
         if(set is None):
             return self.query(b'c')
         else:
@@ -63,6 +71,11 @@ class VCMini:
             return self.set_parameter(b'C', set)
     
     def peak_current(self, set = None):
+        """
+        Query or set peak current parameter D. 
+        The actual peak current I_p is given by I_p = 450mA + (D * 50mA) us. 
+        Should be kept at 1 A (meaning value 11).
+        """
         if(set is None):
             return self.query(b'd')
         else:
@@ -71,6 +84,7 @@ class VCMini:
             return self.set_parameter(b'D', set)
         
     def num_shots(self, set = None):
+        """Query or set number of shots to fire before stopping. 0 means infinite."""
         if(set is None):
             return self.query(b'g')
         else:
@@ -79,21 +93,33 @@ class VCMini:
             return self.set_parameter(b'G', set)
 
     def valve_status(self):
-        """Returns the active status for each of the two valves as a tuple"""
+        """Returns the active status for each of the two valves as a tuple."""
         v = self.query(b'q')
         return (v & 0x10, v & 0x01)
     
     def shot_counter(self, valve):
-        """Returns the shot counter for the specified valve"""
+        """Returns the shot counter for the specified valve.
+        
+        The shot counter is volatile, at power-on it is set to 0.
+        """
         if valve == 0:
             return self.query(b'y')
         elif valve == 1:
             return self.query(b'z')
         else:
             raise Exception("Invalid valve number")
+        
+    def zero_shot_counter(self, valve):
+        """Zero the shot counter for the specified valve."""
+        if valve == 0:
+            return self.execute(b'I')
+        elif valve == 1:
+            return self.execute(b'J')
+        else:
+            raise ValueError("Invalid valve number")
 
     def total_shot_counter(self, valve):
-        """Returns the total shot counter for the specified valve"""
+        """Returns the total shot counter for the specified valve."""
         if valve == 0:
             high = self.query(b'u')
             low = self.query(b'v')
@@ -106,6 +132,10 @@ class VCMini:
             raise ValueError("Invalid valve number")
 
     def address(self, set = None):
+        """
+        Query or set the current module address of the valve controller.
+        Returns the module address and module type as a tuple.
+        """
         if(set is not None):
             return self.set_parameter(b'*', set)
         else:
@@ -114,15 +144,98 @@ class VCMini:
             module_type = value[1:]
             return addr, module_type
 
-    def active_parameter_set(self, set = None):
-        if(set is None):
+    def load_parameters(self, position = None):
+        """
+        Loads the a parameter set from the given EEPROM position.
+        If position is `None` return the current parameters position.
+        """
+        if(position is None):
             return self.query(b'p')
         else:
-            if set < 0 or set > 7:
-                raise ValueError("Active parameter set must be between 0 and 7")
-            return self.query(b'n', set)
+            if position < 0 or position > 7:
+                raise ValueError("Parameter position must be between 0 and 7")
+            return self.query(b'n', position)
+
+    def save_parameters(self, position = None):
+        """
+        Saves the active set of parameters to the given EEPROM position.
+        If position is `None` return the current parameters position.
+        """
+        if(position is None):
+            return self.query(b'p')
+        else:
+            if position < 0 or position > 7:
+                raise ValueError("Parameter position must be between 0 and 7")
+            return self.set_parameter(b'N', position)
+            
+    SINGLE = b'X'
+    PULSE = b'T'
+    SERIES = b'P'
+    PULSE_SERIES = b'L'
+    NONE = b'S'
+    def trigger_mode(self, trigger=None):
+        """
+        Set the trigger mode.
+
+        While a trigger mode is active, no further entries are possible on the corresponding module.
+        Only the command ``trigger_mode(VCMini.NONE)`` (stop of a external trigger mode) can be performed.
+
+        Parameters
+        ----------
+        trigger: {VCMini.SINGLE, VCMini.PULSE, VCMini.SERIES, VCMini.PULSE_SERIES, VCMini.NONE}
+        * VCMini.SINGLE : Arm single shot on valves V1 and V2 triggered via external hardware trigger
+        * VCMini.PULSE : Arm single shot on valves V1 and V2 with the opening time controlled by the length of the external hardware trigger
+        * VCMini.SERIES : Arm shot series on valves V1 and V2 triggered via external hardware trigger
+        * VCMini.PULSE_SERIES : Arm shot series on valves V1 and V2 which continues for as long as the external hardware trigger stays high
+        * VCMini.NONE : Exit external trigger mode and disarm all triggers
+        """
+        if trigger is None:
+            trigger = VCMini.NONE
+        if trigger not in [VCMini.SINGLE, VCMini.PULSE, VCMini.SERIES, VCMini.PULSE_SERIES, VCMini.NONE]:
+            raise ValueError("Invalid trigger mode")
+        return self.execute(trigger)
+    
+    V1 = b'Y'
+    V2 = b'Z'
+    V1V2 = b'V'
+    SERIES_V1 = b'Q'
+    SERIES_V2 = b'R'
+    FOREVER_V1V2 = b'U'
+    STOP = b'S'
+    def fire(self, mode=None):
+        """
+        Open the valves according to the specified mode using a software trigger.
+
+        The command delay after receiving the command character until the first shot is fired is approximately
+        2ms. For time-critical applications you should use the capabilities of shot with hardware trigger.
+
+        Parameters
+        ----------
+        mode: {VCMini.V1, VCMini.V2, VCMini.V1V2, 
+        VCMini.SERIES_V1, VCMini.SERIES_V2,
+        VCMini.FOREVER_V1V2, VCMini.STOP}
+        * VCMini.V1 : Single shot of the V1 valve
+        * VCMini.V2 : Single shot of the V2 valve
+        * VCMini.V1V2 : Single shot of both valves simultaneously
+        * VCMini.SERIES_V1 : Series of shots of the V1 valve until num_shots() is reached
+        * VCMini.SERIES_V2 : Series of shots of the V2 valve until num_shots() is reached
+        * VCMini.FOREVER_V1V2 : Series of shots of both valves until until VCMini.STOP is issued
+        * VCMini.STOP : Stop any series of shots
+        """
+        if mode is None:
+            mode = VCMini.STOP
+        if mode not in [VCMini.V1, VCMini.V2, VCMini.V1V2, VCMini.SERIES_V1, VCMini.SERIES_V2, VCMini.FOREVER_V1V2, VCMini.STOP]:
+            raise ValueError("Invalid trigger mode")
+        return self.execute(mode)
+
+
+    
 
     def execute(self, param):
+        """
+        Send an execution command to the controller.
+        Execution commands are defined in the Gyger VC Mini manual.
+        """
         if len(param) != 1:
             raise ValueError("Invalid parameter")
         self.ser.write(b'%c' % param)
@@ -134,6 +247,10 @@ class VCMini:
             raise Exception("Error reading %s" % (param))
 
     def set_parameter(self, param, value):
+        """
+        Send a parametrization command to the controller.
+        Parametrization commands are defined in the Gyger VC Mini manual.
+        """
         if len(param) != 1:
             raise ValueError("Invalid parameter")
         if(not isinstance(value, int)):
@@ -151,6 +268,10 @@ class VCMini:
         return value
                     
     def query(self, param, value=None):
+        """
+        Send a query command parameters to the controller.
+        Query command parameters are defined in the Gyger VC Mini manual.
+        """
         if len(param) != 1:
             raise ValueError("Invalid parameter")
         if(value is None):
