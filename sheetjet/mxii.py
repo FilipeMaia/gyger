@@ -10,11 +10,7 @@ import serial
 class MXII:
     def __init__(self, serial_port = None, baudrate = 19200, timeout_s = 1):
         # Open communication with valve controller VC-Mini
-        ser = serial.Serial(port = serial_port)
-        ser.timeout = timeout_s # seconds
-        self.baudrate=baudrate
-
-        ser.open()        
+        ser = serial.Serial(port = serial_port, baudrate = baudrate, timeout = timeout_s)      
         if(ser.is_open != True):
             raise ConnectionError("Serial port failed to open")
         

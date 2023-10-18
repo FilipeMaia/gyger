@@ -17,7 +17,6 @@ class TG5012A:
         if serial_port is not None:
             # Prefer serial over LAN communication        
             ser = serial.Serial(port = serial_port)
-            ser.open()
             if(ser.is_open != True):
                 raise ConnectionError("Serial port failed to open")
             self.ser = ser
