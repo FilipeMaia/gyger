@@ -172,41 +172,28 @@ class VCMini:
                 raise ValueError("Parameter position must be between 0 and 7")
             return self.set_parameter('N', position)
             
-    SINGLE = 'X'
-    PULSE = 'T'
-    SERIES = 'P'
-    PULSE_SERIES = 'L'
-    NONE = 'S'
-    def trigger_mode(self, mode=None):
+    def trigger_mode(self, mode='stop'):
         """
         Set the trigger mode.
 
         While a trigger mode is active, no further entries are possible on the corresponding module.
-        Only the command ``trigger_mode(VCMini.NONE)`` (stop of a external trigger mode) can be performed.
+        Only the command ``trigger_mode('stop')`` (exit external trigger mode) can be performed.
 
         Parameters
         ----------
-        mode: {VCMini.SINGLE, VCMini.PULSE, VCMini.SERIES, VCMini.PULSE_SERIES, VCMini.NONE}
-        * VCMini.SINGLE : Arm single shot on valves V1 and V2 triggered via external hardware trigger
-        * VCMini.PULSE : Arm single shot on valves V1 and V2 with the opening time controlled by the length of the external hardware trigger
-        * VCMini.SERIES : Arm shot series on valves V1 and V2 triggered via external hardware trigger
-        * VCMini.PULSE_SERIES : Arm shot series on valves V1 and V2 which continues for as long as the external hardware trigger stays high
-        * VCMini.NONE : Exit external trigger mode and disarm all triggers
+        mode: {'single', 'pulse', 'series', 'pulse series', 'stop'}
+            * 'single' : Arm single shot on valves V1 and V2 triggered via external hardware trigger
+            * 'pulse' : Arm single shot on valves V1 and V2 with the opening time controlled by the length of the external hardware trigger
+            * 'series' : Arm shot series on valves V1 and V2 triggered via external hardware trigger
+            * 'pulse series' : Arm shot series on valves V1 and V2 which continues for as long as the external hardware trigger stays high
+            * 'stop' : Exit external trigger mode and disarm all triggers
         """
-        if mode is None:
-            mode = VCMini.NONE
-        if mode not in [VCMini.SINGLE, VCMini.PULSE, VCMini.SERIES, VCMini.PULSE_SERIES, VCMini.NONE]:
+        cmd_dict = {'single': 'X', 'pulse': 'T', 'series': 'P', 'pulse series': 'L', 'stop': 'S'}
+        if mode not in cmd_dict:
             raise ValueError("Invalid trigger mode")
-        return self.execute(mode)
+        return self.execute(cmd_dict[mode])
     
-    V1 = 'Y'
-    V2 = 'Z'
-    V1V2 = 'V'
-    SERIES_V1 = 'Q'
-    SERIES_V2 = 'R'
-    FOREVER_V1V2 = 'U'
-    STOP = 'S'
-    def fire(self, shot=None):
+    def fire(self, shot='stop'):
         """
         Open the valves according to the specified mode using a software trigger.
 
@@ -215,22 +202,19 @@ class VCMini:
 
         Parameters
         ----------
-        shot: {VCMini.V1, VCMini.V2, VCMini.V1V2, 
-        VCMini.SERIES_V1, VCMini.SERIES_V2,
-        VCMini.FOREVER_V1V2, VCMini.STOP}
-        * VCMini.V1 : Single shot of the V1 valve
-        * VCMini.V2 : Single shot of the V2 valve
-        * VCMini.V1V2 : Single shot of both valves simultaneously
-        * VCMini.SERIES_V1 : Series of shots of the V1 valve until num_shots() is reached
-        * VCMini.SERIES_V2 : Series of shots of the V2 valve until num_shots() is reached
-        * VCMini.FOREVER_V1V2 : Series of shots of both valves until until VCMini.STOP is issued
-        * VCMini.STOP : Stop any series of shots
+        shot: {v1', 'v2', 'both', 'series v1', 'series v2', 'series both', 'stop'} 
+            * 'v1' : Single shot of the v1 valve
+            * 'v2' : Single shot of the v2 valve
+            * 'both' : Single shot of both valves simultaneously
+            * 'series v1' : Series of shots of the v1 valve until num_shots() is reached
+            * 'series v2' : Series of shots of the v2 valve until num_shots() is reached
+            * 'series both' : Series of shots of both valves until until 'stop' is issued
+            * 'stop' : Stop any series of shots
         """
-        if shot is None:
-            mode = VCMini.STOP
-        if shot not in [VCMini.V1, VCMini.V2, VCMini.V1V2, VCMini.SERIES_V1, VCMini.SERIES_V2, VCMini.FOREVER_V1V2, VCMini.STOP]:
-            raise ValueError("Invalid trigger mode")
-        return self.execute(shot)
+        cmd_dict = {'v1': 'Y', 'v2': 'Z', 'both': 'V', 'series v1': 'Q', 'series v2': 'R', 'series both': 'U', 'stop': 'S'}
+        if shot not in cmd_dict:
+            raise ValueError("Invalid shot")
+        return self.execute(cmd_dict[shot])
 
 
     
