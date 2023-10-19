@@ -33,6 +33,16 @@ class VCMini:
         print(self.eeprom.addr[0].params[7])
         self.init_ram()
 
+    def close(self):
+        """Close the serial connection."""
+        self.ser.close()
+
+    def reopen(self):
+        """Reopen the serial connection."""
+        self.ser.open()
+        if(self.ser.is_open != True):
+            raise ConnectionError("Serial port failed to open")
+        self.init_ram()
 
     def init_ram(self):
         """Initialize RAM with default parameters."""
@@ -227,13 +237,14 @@ class VCMini:
         if len(param) != 1:
             raise ValueError("Invalid parameter")
         self.ser.write(param.encode('ascii'))
-        line = self.ser.readline().decode('ascii').strip()
+        ret = self.ser.read_until('>').decode('ascii')
+        line = ret.split('\n')[0].strip()
         if(line != param):
             if line == '?':
                 logging.warning('Valve is busy!')
             else:            
-                raise Exception("Error reading %s. Got %s" % (param, line))
-        prompt = self.ser.read(2).decode('ascii')
+                raise Exception("Error reading %s. Got %s" % (param, ret))
+        prompt = ret.split('\n')[1].strip()
         if(prompt != '\r>'):
             raise Exception("Error reading %s" % (param))
 
@@ -248,14 +259,15 @@ class VCMini:
             raise ValueError("Value must be an integer")
         
         self.ser.write(('%d%s' % (value,param)).encode('ascii'))
-        line = self.ser.readline().decode('ascii').strip()
+        ret = self.ser.read_until('>').decode('ascii')
+        line = ret.split('\n')[0].strip()
 
         if(line != '%d%s' % (value,param)):
             if line == '?':
                 logging.warning('Valve is busy!')
             else:                
                 raise Exception("Error reading %s. Got %s" % (param, line))
-        prompt = self.ser.read(2).decode('ascii')
+        prompt = ret.split('\n')[1].strip()
         if(prompt != '\r>'):
             raise Exception("Error reading %s" % (param))
         value = int(line[-2])
@@ -278,14 +290,15 @@ class VCMini:
                 raise ValueError("Value can only be set when param='n'")
             self.ser.write(('%d%s' % (value,param)).encode('ascii'))
             output = '%d.%s' % (value, param)
-        line = self.ser.readline().decode('ascii').strip()
+        ret = self.ser.read_until('>').decode('ascii')
+        line = ret.split('\n')[0].strip()
 
         if(line[:len(output)] != output):
             if line == '?':
                 logging.warning('Valve is busy!')
             else:
                 raise Exception("Error reading %s. Got %s" % (param,line))
-        prompt = self.ser.read(2).decode('ascii')
+        prompt = ret.split('\n')[1].strip()
         if(prompt != '\r>'):
             raise Exception("Error reading %s" % (param))
         
