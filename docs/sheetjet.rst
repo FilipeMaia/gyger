@@ -28,10 +28,10 @@ sheetjet.tg5012a module
    :undoc-members:
    :show-inheritance:
 
-sheetjet.valve module
+sheetjet.gyger module
 ---------------------
 
-.. automodule:: sheetjet.valve
+.. automodule:: sheetjet.gyger
    :members:
    :undoc-members:
    :show-inheritance:

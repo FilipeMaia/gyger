@@ -20,7 +20,9 @@ class MXII:
         logging.info("Successfully connected to MX II on %s" % (serial_port))
 
     def close(self):
-        """Close the serial connection."""
+        """
+        Close the serial connection.
+        """
         self.ser.close()
 
     def reopen(self):

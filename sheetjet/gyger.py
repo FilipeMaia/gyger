@@ -35,7 +35,9 @@ class VCMini:
         logging.info("Successfully connected to VCMIni on %s" % (serial_port))
 
     def close(self):
-        """Close the serial connection."""
+        """
+        Close the serial connection.
+        """
         self.ser.close()
 
     def reopen(self):
