@@ -240,15 +240,15 @@ class VCMini:
             raise ValueError("Invalid parameter")
         self.ser.write(param.encode('ascii'))
         ret = self.ser.read_until('>').decode('ascii')
-        line = ret.split('\n')[0].strip()
+        line = ret.split('\n')[0]
         if(line != param):
             if line == '?':
                 logging.warning('Valve is busy!')
             else:            
                 raise Exception("Error reading %s. Got %s" % (param, ret))
-        prompt = ret.split('\n')[1].strip()
+        prompt = ret.split('\n')[1]
         if(prompt != '\r>'):
-            raise Exception("Error reading %s" % (param))
+            raise Exception("Error reading %s. Got %s" % (param, ret))
 
     def set_parameter(self, param, value):
         """
@@ -262,16 +262,16 @@ class VCMini:
         
         self.ser.write(('%d%s' % (value,param)).encode('ascii'))
         ret = self.ser.read_until('>').decode('ascii')
-        line = ret.split('\n')[0].strip()
+        line = ret.split('\n')[0]
 
         if(line != '%d%s' % (value,param)):
             if line == '?':
                 logging.warning('Valve is busy!')
             else:                
-                raise Exception("Error reading %s. Got %s" % (param, line))
-        prompt = ret.split('\n')[1].strip()
+                raise Exception("Error reading %s. Got %s" % (param, ret))
+        prompt = ret.split('\n')[1]
         if(prompt != '\r>'):
-            raise Exception("Error reading %s" % (param))
+            raise Exception("Error reading %s. Got %s" % (param, ret))
         value = int(line[-2])
         return value
                     
@@ -293,16 +293,16 @@ class VCMini:
             self.ser.write(('%d%s' % (value,param)).encode('ascii'))
             output = '%d.%s' % (value, param)
         ret = self.ser.read_until('>').decode('ascii')
-        line = ret.split('\n')[0].strip()
+        line = ret.split('\n')[0]
 
         if(line[:len(output)] != output):
             if line == '?':
                 logging.warning('Valve is busy!')
             else:
-                raise Exception("Error reading %s. Got %s" % (param,line))
-        prompt = ret.split('\n')[1].strip()
+                raise Exception("Error reading %s. Got %s" % (param, ret))
+        prompt = ret.split('\n')[1]
         if(prompt != '\r>'):
-            raise Exception("Error reading %s" % (param))
+            raise Exception("Error reading %s. Got %s" % (param, ret))
         
         if(value is None):
             value = line[len(output):]
