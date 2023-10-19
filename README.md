@@ -31,14 +31,31 @@ mxii = sheetjet.MXII(serial_port=devices['MXII'].device)
 
 # You can start to interact with them
 print(func_gen.id())
-func_gen.set('CHN','2')
-print(func_gen.query('CHN?'))
-func_gen.set('CHN','1')
-print(func_gen.query('CHN?'))
-
+func_gen.channel(2)
+print(func_gen.channel())
+func_gen.channel(1)
+print(func_gen.channel())
 
 print(vcmini.address())
-print(vcmini.address(set=1))
+print(vcmini.address(1))
 print(vcmini.address())
 
 ```
+
+## Known Issues
+
+### Gyger SMLD micro valves
+
+To trigger valves you need to send them a pulse longer than 10 us.
+
+### Duplicate COM ports under Windows
+
+Windows sometimes assigns two different devices to the same COM port (e.g. [1](https://superuser.com/questions/1587613/windows-10-two-serial-usb-devices-were-given-an-identical-port-number), [2](https://answers.microsoft.com/en-us/windows/forum/all/com-port-changes-and-same-for-two-devices-after/84837db6-2ef3-4fa6-9568-47e8805bd290)). This makes communication with the devices impossible using the COM port.
+The workaround is to manually change the COM port assigned.
+1. Open Device manager and right click on start button
+and then on Device manager.
+2. Expand port "COMS & LPT".
+3. Right click on problematic device and then on properties.
+4. Go to port settings and click on Advanced.
+5. You will be able to make the changes on this screen.
+
