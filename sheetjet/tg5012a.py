@@ -11,6 +11,10 @@ import logging
 
 class TG5012A:
     def __init__(self, serial_port = None, address='t539639.local', port=9221, auto_local=True):
+        """Connects to a TF5012A function generator using the given serial_port or LAN address and port
+        
+        If auto_local is true (default), the instrument will be set to local mode after each command.
+        """
         self.terminator = b'\n'
         self.ser = None
         self.sock = None
@@ -21,17 +25,27 @@ class TG5012A:
             if(ser.is_open != True):
                 raise ConnectionError("Serial port failed to open")
             self.ser = ser
-            logging.info("Successfully connected to %s" % (serial_port))            
+            logging.info(self.id())
+            logging.info("Successfully connected to TG5012A on %s" % (serial_port))            
         else:
             # Open LAN connection
             self.sock = socket.socket()
             self.sock.connect((address, port))
-            logging.info("Successfully connected to %s:%d" % (address, port))
-        print(self.id())
-
+            logging.info(self.id())
+            logging.info("Successfully connected to TG5012A on %s:%d" % (address, port))
         
+    def close(self):
+        """Close the serial connection."""
+        self.ser.close()
 
-    
+    def reopen(self):
+        """Reopen the serial connection."""
+        self.ser.open()
+        if(self.ser.is_open != True):
+            raise ConnectionError("Serial port failed to open")
+        logging.info("Successfully connected to %s" % (self.ser.port))
+        logging.info(self.id())  
+
     # Convenience functions
     def pulse(self, freq=1, width=0.1, rise = 0.001, fall = 0.001, high=1, low=0, delay = 0, phase=0, output = "ON"):
         """Sets the output to a pulse with the given parameters"""
@@ -60,19 +74,23 @@ class TG5012A:
         return self.set("WAVE", str(set))
     
     def frequency(self, set = 1):
-        """Sets the output frequency"""
+        """Sets the output frequency in Hz"""
         return self.set("FREQ", str(set))
     
     def amplitude(self, set = 1):
-        """Sets the output amplitude"""
+        """Sets the output amplitude, in volts"""
         return self.set("AMPL", str(set))
         
+    def offset(self, set = 0):
+        """Sets the DC offset, in volts"""
+        return self.set("DCOFFS", str(set))
+    
     def high(self, set = 1):
-        """Sets the amplitude high level"""
+        """Sets the amplitude high level, in volts"""
         return self.set("HILVL", str(set))
     
     def low(self, set = 0):
-        """Sets the amplitude low level"""
+        """Sets the amplitude low level, in volts"""
         return self.set("LOLVL", str(set))
     
     def output(self, set = "ON"):
@@ -94,23 +112,23 @@ class TG5012A:
     # Pulse Generator Commands
 
     def pulse_frequency(self, set = 1):
-        """Sets the pulse frequency in Hz"""
+        """Sets the pulse frequency, in Hz"""
         return self.set("PULSFREQ", str(set))
     
     def pulse_width(self, set = 1):
-        """Sets the pulse width in seconds"""
+        """Sets the pulse width, in seconds"""
         return self.set("PULSWID", str(set))
 
     def pulse_rise(self, set = 0.001):
-        """Sets the pulse rise time in seconds"""
+        """Sets the pulse rise time, in seconds"""
         return self.set("PULSRISE", str(set))
     
     def pulse_fall(self, set = 0.001):
-        """Sets the pulse fall time in seconds"""
+        """Sets the pulse fall time, in seconds"""
         return self.set("PULSFALL", str(set))
     
     def pulse_delay(self, set = 0):
-        """Sets the pulse delay in seconds"""
+        """Sets the pulse delay, in seconds"""
         return self.set("PULSDLY", str(set))
 
     # System and Status Commands

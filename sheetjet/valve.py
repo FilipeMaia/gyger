@@ -32,6 +32,7 @@ class VCMini:
         self.eeprom.addr[0].params[7].cycle_time = 1000
         print(self.eeprom.addr[0].params[7])
         self.init_ram()
+        logging.info("Successfully connected to VCMIni on %s" % (serial_port))
 
     def close(self):
         """Close the serial connection."""
@@ -43,6 +44,7 @@ class VCMini:
         if(self.ser.is_open != True):
             raise ConnectionError("Serial port failed to open")
         self.init_ram()
+        logging.info("Successfully connected to VCMIni on %s" % (self.ser.port))
 
     def init_ram(self):
         """Initialize RAM with default parameters."""

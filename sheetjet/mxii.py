@@ -15,6 +15,22 @@ class MXII:
             raise ConnectionError("Serial port failed to open")
         self.ser = ser
         self.terminator = '\r'
+        # Test one command
+        self.mode()
+        logging.info("Successfully connected to MX II on %s" % (serial_port))
+
+    def close(self):
+        """Close the serial connection."""
+        self.ser.close()
+
+    def reopen(self):
+        """Reopen the serial connection."""
+        self.ser.open()
+        if(self.ser.is_open != True):
+            raise ConnectionError("Serial port failed to open")
+        # Test one command
+        self.mode()
+        logging.info("Successfully connected to MX II on %s" % (self.ser.port))
 
     def port(self, port = None):
         """Queries or sets the active port"""
