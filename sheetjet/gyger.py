@@ -216,7 +216,7 @@ class VCMini:
 
         Parameters
         ----------
-        shot: {v1', 'v2', 'both', 'series v1', 'series v2', 'series both', 'stop'} 
+        shot: {'v1', 'v2', 'both', 'series v1', 'series v2', 'series both', 'stop'} 
             * 'v1' : Single shot of the v1 valve
             * 'v2' : Single shot of the v2 valve
             * 'both' : Single shot of both valves simultaneously
@@ -318,22 +318,39 @@ class VCMini:
 
 @dataclass
 class ValveParameters:
-    """Set of valve control parameters."""
-    peak_time: int = 150 # in us. Peak current time to initiate valve opening, also known as A in the manual
-    open_time: int = 100000 # in us. Valve open time, also known as B in the manual
-    cycle_time: int = 1000000 # in us. Firing frequency, also known as C in the manual
-    peak_current: int = 11 # Also known as D in the manual. The actual peak current
-                      #I_p is given by I_p = 450mA + (D * 50mA) us. Should be kept at 1 A (meaning value 11)
-    num_shots: int = 1 # Number of shots to fire before stopping. 0 means infinite. Also known as G in the manual
+    """
+    Set of valve control parameters.
+    
+    Args:
+        peak_time: Peak current time to initiate valve opening, also known as A in the manual. Given in us.
+        open_time: Valve open time, also known as B in the manual. Given in us.
+        cycle_time: Firing frequency, also known as C in the manual. Given in us.
+        peak_current: The actual peak current I_p is given by I_p = 450mA + (D * 50mA) us. Should be kept at 1 A (meaning value 11)
+        num_shots: Number of shots to fire before stopping. 0 means infinite. Also known as G in the manual    
+    """
+    peak_time: int = 150
+    open_time: int = 100000
+    cycle_time: int = 1000000
+    peak_current: int = 11
+    num_shots: int = 1
 
 @dataclass
 class ParameterSet:
-    """Set of 8 valve control parameters. The EEPROM can store 9 sets of parameters."""
+    """Set of 8 valve control parameters. The EEPROM can store 9 sets of parameters.
+    
+    Args:
+        params: Tuple of 8 ValveParameters objects.
+
+    :meta private:
+    """
     params: Tuple[ValveParameters] = tuple(ValveParameters() for i in range(8))
 
 @dataclass
 class EEPROM:
-    """Set of 9 parameter sets."""
+    """Set of 9 parameter sets.
+    
+    :meta private:
+    """
     addr: Tuple[ParameterSet] = tuple(ParameterSet() for i in range(9))
 
 
