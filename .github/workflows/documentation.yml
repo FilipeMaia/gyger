@@ -16,7 +16,7 @@ jobs:
           pip install sphinx sphinx_rtd_theme
       - name: Install sheetjet
         run: |
-          pip install ./sheetjet
+          pip install .
       - name: Sphinx build
         run: |
           sphinx-build docs _build
