@@ -1,15 +1,20 @@
 # SheetJet
+![docs workflow](https://github.com/FilipeMaia/sheetjet/actions/workflows/documentation.yml/badge.svg)
 
 SheetJet is a python package to control hardware devices necessary to run a sheet jet sample delivery experiment, like the one described in [https://doi.org/10.1107/S2052252523007972](https://doi.org/10.1107/S2052252523007972)
 
 It currently controls:
--  two Fritz Gyger AG SMLD micro valves, using the serial interface to VC Mini
-- a Rheodyne MXII valve from IDEX Health & Science
-- a TG5012A function generator from Aim-TTi to trigger the micro valves
+-  Fritz Gyger AG SMLD micro valves, using the serial interface to VC Mini
+- Rheodyne MXII valve from IDEX Health & Science
+- TG5012A function generator from Aim-TTi to trigger the micro valves
 
 ## Installation
 
 To install it simply run `pip install .` inside the source directory, like any python package.
+
+## Documentation
+
+[https://filipemaia.github.io/sheetjet/](https://filipemaia.github.io/sheetjet/)
 
 ## Usage
 
