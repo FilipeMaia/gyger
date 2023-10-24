@@ -28,7 +28,7 @@ def discover(devices = ['VCMini', 'TG5012A', 'MXP7970', 'MXP9970'], config_file 
     Returns
     -------
     dict
-        A dictionary with the `DeviceInfo` of each of the devices specified.
+        A dictionary with the ``DeviceInfo`` of each of the devices specified.
     
     See Also
     --------
@@ -117,14 +117,14 @@ def read_config(config_file, check_against_ports = True):
 class DeviceInfo:
     """
     Stores basic information about a serial port and the hardware attached to it.
-    This information is derived from pySerial's `ListPortInfo` class.
+    This information is derived from pySerial's ``ListPortInfo`` class.
     https://pyserial.readthedocs.io/en/latest/tools.html#serial.tools.list_ports.ListPortInfo
 
     Attributes
     ----------
     device : str
-        The device name/path, e.g. `COM4` on Windows or `/dev/ttyUSB0` under Linux.
-        Corresponds to the `device` attribute in `ListPortInfo`.
+        The device name/path, e.g. ``COM4`` on Windows or ``/dev/ttyUSB0`` under Linux.
+        Corresponds to the ``device`` attribute in ``ListPortInfo``.
     hwid : str
         An identifier for the hardware attached on the device.
         Should help us to later identify if the same hardware is still plugged in.
