@@ -23,16 +23,19 @@ Here's an example of how to use the package:
 ```python
 import sheetjet
 
-# Find out the serial ports of the different devices
+# Find out the serial ports of the different devices.
+# The names are arbitrary strings just to identify each device.
 # You will need to disconnect/connect each of the devices
 # to identify their ports. If you already know the port 
-# names you can skip this step 
-devices = sheetjet.discover()
+# names you can skip this step.
+devices = sheetjet.discover(['micro_valve','func_gen'])
 
 # Initialize the devices
-vcmini = sheetjet.VCMini(serial_port=devices['VCMini'].device)
-func_gen = sheetjet.TG5012A(serial_port=devices['TG5012A'].device)
-mxii = sheetjet.MXII(serial_port=devices['MXII'].device)
+vcmini = sheetjet.VCMini(serial_port=devices['micro_valve'].device)
+func_gen = sheetjet.TG5012A(serial_port=devices['func_gen'].device)
+
+# If we already know the serial port to an MXII valve
+valve = sheetjet.MXII(serial_port='COM7')
 
 # You can start to interact with them
 print(func_gen.id())
@@ -44,6 +47,9 @@ print(func_gen.channel())
 print(vcmini.address())
 print(vcmini.address(1))
 print(vcmini.address())
+
+print(valve.port())
+
 
 ```
 
