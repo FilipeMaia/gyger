@@ -4,15 +4,32 @@ import logging
 
 
 
-def discover(config_file = 'sheetjet.ini', save_config = True, load_config = True):
+def discover(devices = ['VCMini', 'TG5012A', 'MXP7970', 'MXP9970'], config_file = 'sheetjet.ini', save_config = True, load_config = True):
     """
-    Find the addresses of all the serial device by either 
+    Find the addresses of the specified devices by either 
     loading them from a configuration file or by 
     manually unplugging and plugging in the device.
     
-    Returns:
-    Dictionary with the device name of each of the 3 
-    devices: VCMini, TG5012A and MXII
+    Parameters
+    ----------
+    devices: list of str
+        Names of the devices to search for. 
+        These are arbitrary strings that are just used to identify the devices to the user.
+
+    config_file: str
+        Path to the configuration file to load and save the device addresses to.
+
+    save_config: bool
+        If True, save the addresses of the devices found to the configuration file.
+
+    load_config: bool
+        If True, load the addresses of the devices from the configuration file instead of searching for them again.
+
+    Returns
+    -------
+    dict
+        Dictionary of the PySerial `ListPortInfo <https://pyserial.readthedocs.io/en/latest/tools.html#serial.tools.list_ports.ListPortInfo>` for each of the devices specified.
+    
     """
     ret = None
     if(load_config):
@@ -23,7 +40,7 @@ def discover(config_file = 'sheetjet.ini', save_config = True, load_config = Tru
     print('Performing manual USB address search.')
     if ret is None:
         ret = {}
-    for d in ['VCMini', 'TG5012A', 'MXII']:
+    for d in devices:
         if d not in ret or ret[d] is None:
             ret[d] = discover_device(d)
     if save_config:
