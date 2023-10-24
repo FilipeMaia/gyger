@@ -55,9 +55,11 @@ def discover_device(name):
     print('Searching for %s' % (name))
     input('    Unplug the USB/Serial cable connected to %s. Press Enter when unplugged...' %(name))
     before = list_ports.comports()
+    check_duplicate_ports(before)
     logging.debug('Devices found after unplugging:\n%s' %(format_devices_found(before)))
     input('    Reconnect the cable. Press Enter when the cable has been plugged in...')
     after = list_ports.comports()
+    check_duplicate_ports(after)
     logging.debug('Devices found after replugging:\n%s' %(format_devices_found(after)))
     port = [i for i in after if i not in before]
     if(len(port) == 1):
@@ -101,6 +103,7 @@ def read_config(config_file, check_against_ports = True):
         return ret
     
     ports = list_ports.comports()
+    check_duplicate_ports(ports)
     for d in ['VCMini', 'TG5012A', 'MXII']:
         found = False
         for p in ports:
@@ -112,6 +115,15 @@ def read_config(config_file, check_against_ports = True):
             logging.warning('Could not find %s with hwid %s' %(d, ret[d].hwid))
             ret[d] = None
     return ret
+
+def check_duplicate_ports(port_list):
+    devices = [p.device for p in port_list]
+    repeat_devices = [i for i, x in enumerate(devices) if devices.count(x) > 1]
+    if len(repeat_devices) > 0:
+        logging.warning('Found repeated device names:')
+        for i in repeat_devices:
+            logging.warning('device:%s hwid:%s' % (port_list[i].device, port_list[i].hwid))
+
 
 
 class DeviceInfo:
