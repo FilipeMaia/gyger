@@ -4,6 +4,11 @@ from typing import Tuple
 import logging
 
 class VCMini:
+    """
+    Control a Gyger VC Mini valve controller.
+
+    Based on the "Manual serial interface VC Mini rev 2.00 en" found at https://www.fgyger.ch/downloads/?lang=en   
+    """
     def __init__(self, serial_port = 'COM6', baudrate=38400, timeout_s=1):
         """
         Open communication with valve controller VC-Mini

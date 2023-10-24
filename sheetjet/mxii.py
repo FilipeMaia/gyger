@@ -1,13 +1,13 @@
-"""
-Control of IDEX HS MX Series II valves.
-
-Based on the manuals found at https://www.idex-hs.com/docs/default-source/product-manuals/mx-series-ii-driver-development-package.pdf.zip
-and https://www.idex-hs.com/docs/default-source/product-manuals/rheolink-i2c-communication-protocol-for-titanex.pdf.zip
-"""
 import logging
 import serial
 
 class MXII:
+    """
+    Control of IDEX HS MX Series II valves.
+
+    Based on the manuals found at https://www.idex-hs.com/docs/default-source/product-manuals/mx-series-ii-driver-development-package.pdf.zip
+    and https://www.idex-hs.com/docs/default-source/product-manuals/rheolink-i2c-communication-protocol-for-titanex.pdf.zip
+    """
     def __init__(self, serial_port = None, baudrate = 19200, timeout_s = 1):
         # Open communication with valve controller VC-Mini
         ser = serial.Serial(port = serial_port, baudrate = baudrate, timeout = timeout_s)      

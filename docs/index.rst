@@ -10,7 +10,7 @@ Welcome to sheetjet's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   modules
+   sheetjet
 
 Indices and tables
 ==================

@@ -32,7 +32,7 @@ def discover(devices = ['VCMini', 'TG5012A', 'MXP7970', 'MXP9970'], config_file 
     
     See Also
     --------
-    sheetjet.discovery.DeviceInfo
+    sheetjet.DeviceInfo
 
     """
     ret = None

@@ -1,15 +1,16 @@
-"""
-Control of the Aim TTi TG5012A function generator.
 
-Based on the manual found at 
-https://resources.aimtti.com/manuals/TG5012A_2512A_5011A+2511A_Instructions-Iss8.pdf
-"""
 
 import socket
 import serial
 import logging
 
 class TG5012A:
+    """
+    Control of the Aim TTi TG5012A function generator.
+
+    Based on the manual found at 
+    https://resources.aimtti.com/manuals/TG5012A_2512A_5011A+2511A_Instructions-Iss8.pdf
+    """
     def __init__(self, serial_port = None, address='t539639.local', port=9221, auto_local=True):
         """Connects to a TF5012A function generator using the given serial_port or LAN address and port
         

@@ -1,45 +1,25 @@
-sheetjet package
-================
+API documentation
+=================
 
-Submodules
-----------
+.. autofunction:: sheetjet.discover
 
-sheetjet.discovery module
--------------------------
-
-.. automodule:: sheetjet.discovery
+.. autoclass:: sheetjet.DeviceInfo
    :members:
    :undoc-members:
    :show-inheritance:
 
-sheetjet.mxii module
---------------------
-
-.. automodule:: sheetjet.mxii
+.. autoclass:: sheetjet.MXII
    :members:
    :undoc-members:
    :show-inheritance:
 
-sheetjet.tg5012a module
------------------------
-
-.. automodule:: sheetjet.tg5012a
+.. autoclass:: sheetjet.TG5012A
    :members:
    :undoc-members:
    :show-inheritance:
 
-sheetjet.gyger module
----------------------
-
-.. automodule:: sheetjet.gyger
+.. autoclass:: sheetjet.VCMini
    :members:
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
-
-.. automodule:: sheetjet
-   :members:
-   :undoc-members:
-   :show-inheritance:
