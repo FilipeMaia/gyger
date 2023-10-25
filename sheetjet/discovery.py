@@ -123,6 +123,7 @@ def check_duplicate_ports(port_list):
         logging.warning('Found repeated device names:')
         for i in repeat_devices:
             logging.warning('device:%s hwid:%s' % (port_list[i].device, port_list[i].hwid))
+        logging.warning('Check https://filipemaia.github.io/sheetjet/known_issues.html#duplicate-com-ports-under-windows for a workaround.')
 
 
 
