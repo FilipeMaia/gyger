@@ -11,6 +11,7 @@ Welcome to sheetjet's documentation!
    :caption: Contents:
 
    sheetjet
+   known_issues
 
 Indices and tables
 ==================
