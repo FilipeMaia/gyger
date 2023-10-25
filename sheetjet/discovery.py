@@ -4,7 +4,7 @@ import logging
 
 
 
-def discover(devices = ['VCMini', 'TG5012A', 'MXP7970', 'MXP9970'], config_file = 'sheetjet.ini', save_config = True, load_config = True):
+def discover(devices = ['VCMini', 'TG5012A', 'MXP7970', 'MXP9900'], config_file = 'sheetjet.ini', save_config = True, load_config = True):
     """
     Find the addresses of the specified devices by either 
     loading them from a configuration file or by 
@@ -38,8 +38,14 @@ def discover(devices = ['VCMini', 'TG5012A', 'MXP7970', 'MXP9970'], config_file 
     ret = None
     if(load_config):
         ret = read_config(config_file)
-        if ret is not None and None not in ret.values():
-            return ret
+        if ret is not None:
+            found_all = True
+            for d in devices:
+                if d not in ret or ret[d] is None:
+                    found_all = False
+                    break
+            if found_all:
+                return ret
         
     print('Performing manual USB address search.')
     if ret is None:
