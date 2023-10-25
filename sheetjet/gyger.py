@@ -27,16 +27,22 @@ class VCMini:
         if(ser.is_open != True):
             raise ConnectionError("Serial port failed to open")
         self.ser = ser
-        # Set an initial address        
-        self.address(0)
-        # Set an initial parameter set
-        self.load_parameters(0)
+        try:
+            # In case the controller is in trigger mode first stop it
+            self.trigger_mode('stop')
+            # Set an initial address        
+            self.address(0)
+            # Set an initial parameter set
+            self.load_parameters(0)
 
-        self.eeprom = EEPROM()
-        print(self.eeprom.addr[0].params[7])
-        self.eeprom.addr[0].params[7].cycle_time = 1000
-        print(self.eeprom.addr[0].params[7])
-        self.init_ram()
+            self.eeprom = EEPROM()
+            print(self.eeprom.addr[0].params[7])
+            self.eeprom.addr[0].params[7].cycle_time = 1000
+            print(self.eeprom.addr[0].params[7])
+            self.init_ram()
+        except:
+            self.close()
+            raise
         logging.info("Successfully connected to VCMIni on %s" % (serial_port))
 
     def close(self):

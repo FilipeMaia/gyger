@@ -16,8 +16,12 @@ class MXII:
         self.ser = ser
         self.terminator = '\r'
         # Test one command
-        self.mode()
-        logging.info("Successfully connected to MX II on %s" % (serial_port))
+        try:
+            self.mode()
+            logging.info("Successfully connected to MX II on %s" % (serial_port))
+        except:
+            ser.close()
+            raise
 
     def close(self):
         """

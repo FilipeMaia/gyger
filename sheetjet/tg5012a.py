@@ -25,15 +25,23 @@ class TG5012A:
             ser = serial.Serial(port = serial_port)
             if(ser.is_open != True):
                 raise ConnectionError("Serial port failed to open")
-            self.ser = ser
-            logging.info(self.id())
-            logging.info("Successfully connected to TG5012A on %s" % (serial_port))            
+            try:
+                self.ser = ser
+                logging.info(self.id())
+                logging.info("Successfully connected to TG5012A on %s" % (serial_port))
+            except:
+                ser.close()
+                raise
         else:
             # Open LAN connection
             self.sock = socket.socket()
             self.sock.connect((address, port))
-            logging.info(self.id())
-            logging.info("Successfully connected to TG5012A on %s:%d" % (address, port))
+            try:
+                logging.info(self.id())
+                logging.info("Successfully connected to TG5012A on %s:%d" % (address, port))
+            except:
+                self.sock.close()
+                raise
         
     def close(self):
         """Close the serial connection."""
