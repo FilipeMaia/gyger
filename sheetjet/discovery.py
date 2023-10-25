@@ -110,7 +110,7 @@ def read_config(config_file, check_against_ports = True):
     
     ports = list_ports.comports()
     check_duplicate_ports(ports)
-    for d in ['VCMini', 'TG5012A', 'MXII']:
+    for d in ret.keys():
         found = False
         for p in ports:
             if(p.hwid == ret[d].hwid):
