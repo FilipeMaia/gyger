@@ -1,6 +1,3 @@
-Known Issues
-============
-
 Gyger SMLD micro valves
 +++++++++++++++++++++++
 To trigger valves you need to send them a pulse longer than 10 us.

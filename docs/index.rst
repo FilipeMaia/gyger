@@ -7,9 +7,18 @@ Welcome to sheetjet's documentation!
 ====================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
+   :caption: API
 
-   sheetjet
+   discovery
+   mxii
+   vcmini
+   tg5012a
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Known Issues
+
    known_issues
 
 Indices and tables

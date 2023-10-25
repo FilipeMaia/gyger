@@ -32,6 +32,7 @@ autodoc_preserve_defaults=True
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
+# show the "Edit on GitHub" link
 html_context = {
     "display_github": True, # Integrate GitHub
     "github_user": "FilipeMaia", # Username
@@ -39,3 +40,6 @@ html_context = {
     "github_version": "main", # Version
     "conf_py_path": "/docs/", # Path in the checkout to the docs root
 }
+
+# Don't show class names inside of pages with the same title
+html_theme_options = {"titles_only": True}
