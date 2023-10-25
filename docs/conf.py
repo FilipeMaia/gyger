@@ -31,3 +31,11 @@ autodoc_preserve_defaults=True
 
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
+
+html_context = {
+    "display_github": True, # Integrate GitHub
+    "github_user": "FilipeMaia", # Username
+    "github_repo": "sheetjet", # Repo name
+    "github_version": "main", # Version
+    "conf_py_path": "/docs/", # Path in the checkout to the docs root
+}

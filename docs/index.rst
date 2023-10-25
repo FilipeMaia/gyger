@@ -8,7 +8,6 @@ Welcome to sheetjet's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
    sheetjet
    known_issues
