@@ -21,6 +21,7 @@ class TG5012A:
         self.ser = None
         self.sock = None
         self.auto_local = auto_local
+        self.error_check = error_check
         if serial_port is not None:
             # Prefer serial over LAN communication        
             ser = serial.Serial(port = serial_port)
