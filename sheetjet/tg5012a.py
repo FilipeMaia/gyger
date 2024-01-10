@@ -11,10 +11,11 @@ class TG5012A:
     Based on the manual found at 
     https://resources.aimtti.com/manuals/TG5012A_2512A_5011A+2511A_Instructions-Iss8.pdf
     """
-    def __init__(self, serial_port = None, address='t539639.local', port=9221, auto_local=True):
+    def __init__(self, serial_port = None, address='t539639.local', port=9221, auto_local=True, error_check=True):
         """Connects to a TF5012A function generator using the given serial_port or LAN address and port
         
         If auto_local is true (default), the instrument will be set to local mode after each command.
+        if error_check is true (default), the instrument will check for errors after each command.
         """
         self.terminator = b'\n'
         self.ser = None
@@ -328,7 +329,11 @@ class TG5012A:
     def query(self, cmd):
         self.write(cmd)
         ret = self.read()
-        if(self.auto_local and cmd != "LOCAL"):
+        if cmd != "QER?" and cmd != "EER?" and self.error_check:
+            err = self.query_error()
+            if int(err) != 0:
+                raise ValueError("Instrument returned query error %s" % (err))        
+        if(self.auto_local and cmd != "LOCAL" and cmd != "QER?" and cmd != "EER?"):
             self.local()
         return ret
     
@@ -337,8 +342,13 @@ class TG5012A:
             ret = self.write(cmd)
         else:
             ret = self.write(cmd + ' ' + str(value))
+        if self.error_check:
+            err = self.execution_error()
+            if int(err) != 0:
+                raise ValueError("Instrument returned execution error %s" % (err))
         if(self.auto_local and cmd != "LOCAL"):
-            self.local()        
+            self.local()
+                    
         return ret
     
     def write(self, str):
