@@ -30,21 +30,32 @@ class VCMini:
         try:
             # In case the controller is in trigger mode first stop it
             self.trigger_mode('stop')
-            # Set an initial address        
-            self.address(0)
+            # Set an initial address. You probably don't need to change this      
+            self._address(0)
             # Set an initial parameter set
-            self.load_parameters(0)
-
+            #self.active_valve('v1')
             self.eeprom = EEPROM()
-            print(self.eeprom.addr[0].params[7])
-            self.eeprom.addr[0].params[7].cycle_time = 1000
-            print(self.eeprom.addr[0].params[7])
             self.init_ram()
+
         except:
             self.close()
             raise
         logging.info("Successfully connected to VCMIni on %s" % (serial_port))
 
+    def __str__(self):
+        """Show all the parameters of the valve controller."""
+        return "VC-Mini on %s active valve %s\n" \
+            "  Peak time: %d us\n" \
+            "  Open time: %d us\n" \
+            "  Cycle time: %d us\n" \
+            "  Peak current: %d\n" \
+            "  Active par" % (self.ser.port, 
+                              self.active_valve(),
+                              self.peak_time(), 
+                              self.open_time(), 
+                              self.cycle_time(), 
+                              self.peak_current())
+        
     def close(self):
         """
         Close the serial connection.
@@ -62,6 +73,10 @@ class VCMini:
     def init_ram(self):
         """Initialize RAM with default parameters."""
         self.ram = ValveParameters()
+        self.read_ram()
+
+    def read_ram(self):
+        """Read RAM parameters."""
         self.ram.peak_time = self.peak_time()
         self.ram.open_time = self.open_time()
         self.ram.cycle_time = self.cycle_time()
@@ -69,13 +84,14 @@ class VCMini:
         self.ram.num_shots = self.num_shots()
 
 
-    def peak_time(self, set = None, override_limits = False):
+    def peak_time(self, set = None, valve = 'both', override_limits = False):
         """Query or set peak current time to initiate valve opening, in us."""
         if(set is None):
             return self.query('a')
         else:
             if(set < 100 or set  > 500) and not override_limits:
                 raise ValueError("Peak time must be between 100 and 500 us")
+            self.ram.peak_time = set
             return self.set_parameter('A', set)
 
     def open_time(self, set = None, override_limits = False):
@@ -85,6 +101,7 @@ class VCMini:
         else:
             if (set < 400 or set > 9999999) and not override_limits:
                 raise ValueError("Open time must be between 400 and 9999999 us")
+            self.ram.open_time = set
             self.set_parameter('B', set)
 
     def cycle_time(self, set = None):
@@ -116,7 +133,7 @@ class VCMini:
         else:
             if set < 0 or set > 65535:
                 raise ValueError("Number of shots must be between 0 and 65535")
-            return self.set_parameter('G', set)
+            return self.set_parameter('G', set)            
 
     def valve_status(self):
         """Returns the active status for each of the two valves as a tuple."""
@@ -156,8 +173,43 @@ class VCMini:
             return (high<<24) | low
         else:
             raise ValueError("Invalid valve number")
+        
+    def active_valve(self, valve = None, param_set = 0, save_on_change = True):
+        """
+        Query or set the active valve. Changes to most parameters only affect the active valve.
+        valve can be None, v1 or v2. If it is None, the current active valve is returned.
 
-    def address(self, set = None):
+        param_set is a number from 0-3 that defines what parameter set is loaded from the controller.
+        save_on_change is a boolean that defines if the current parameters should be saved to the EEPROM before changing the active valve.
+        If they are not saved, any changes made to the parameters of the previously active valve will be lost.
+        """
+        if(set is None):
+            cur_param_set = int(self._load_parameters())
+            if cur_param_set >= 0 and cur_param_set < 4:
+                return 'v1'
+            elif cur_param_set >= 4 and cur_param_set < 8:
+                return 'v2'
+            else:
+                raise ValueError("Invalid parameter set")
+        else:
+            if set not in ['v1', 'v2']:
+                raise ValueError("Invalid valve")
+            if param_set < 0 or param_set > 3:
+                raise ValueError("Parameter set must be between 0 and 3")
+            
+            cur_param_set = int(self._load_parameters())
+            if save_on_change:
+                self._save_parameters(position = cur_param_set)
+            
+            if set == 'v1':
+                offset = 0
+            elif set == 'v2':
+                offset = 4
+            else:
+                raise ValueError("Invalid valve")            
+            self._load_parameters(position = param_set+offset)
+
+    def _address(self, set = None):
         """
         Query or set the current module address of the valve controller.
         Returns the module address and module type as a tuple.
@@ -173,7 +225,7 @@ class VCMini:
             return addr, module_type
             
 
-    def load_parameters(self, position = None):
+    def _load_parameters(self, position = None):
         """
         Loads the a parameter set from the given EEPROM position.
         If position is `None` return the current parameters position.
@@ -183,9 +235,11 @@ class VCMini:
         else:
             if position < 0 or position > 7:
                 raise ValueError("Parameter position must be between 0 and 7")
-            return self.query('n', position)
+            ret =  self.query('n', position)
+            self.read_ram()
+            return ret
 
-    def save_parameters(self, position = None):
+    def _save_parameters(self, position = None):
         """
         Saves the active set of parameters to the given EEPROM position.
         If position is `None` return the current parameters position.
@@ -286,6 +340,7 @@ class VCMini:
         if(prompt != '\r>'):
             raise Exception("Error reading %s. Got %s" % (param, ret))
         value = int(line[-2])
+        self.read_ram()
         return value
                     
     def query(self, param, value=None):
