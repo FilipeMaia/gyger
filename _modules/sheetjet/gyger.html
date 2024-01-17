@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sheetjet.gyger &mdash; sheetjet 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=01f34227"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            sheetjet
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../discovery.html">Device Discovery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mxii.html">MXII</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../vcmini.html">VCMini</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tg5012a.html">TG5012A</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Known Issues</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../known_issues.html">Gyger SMLD micro valves</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../known_issues.html#duplicate-com-ports-under-windows">Duplicate COM ports under Windows</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">sheetjet</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">sheetjet.gyger</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sheetjet.gyger</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">serial</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<div class="viewcode-block" id="VCMini">
+<a class="viewcode-back" href="../../vcmini.html#sheetjet.VCMini">[docs]</a>
+<span class="k">class</span> <span class="nc">VCMini</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Control a Gyger VC Mini valve controller.</span>
+
+<span class="sd">    Based on the &quot;Manual serial interface VC Mini rev 2.00 en&quot; found at https://www.fgyger.ch/downloads/?lang=en   </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">serial_port</span> <span class="o">=</span> <span class="s1">&#39;COM6&#39;</span><span class="p">,</span> <span class="n">baudrate</span><span class="o">=</span><span class="mi">38400</span><span class="p">,</span> <span class="n">timeout_s</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Open communication with valve controller VC-Mini</span>
+
+<span class="sd">        Also sets the module address to 0, active parameter set to 0 and </span>
+<span class="sd">        reads the current parameters loaded.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ser</span> <span class="o">=</span> <span class="n">serial</span><span class="o">.</span><span class="n">Serial</span><span class="p">()</span>
+        <span class="n">ser</span><span class="o">.</span><span class="n">baudrate</span> <span class="o">=</span> <span class="n">baudrate</span>
+        <span class="n">ser</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="n">serial_port</span>
+        <span class="n">ser</span><span class="o">.</span><span class="n">parity</span> <span class="o">=</span> <span class="n">serial</span><span class="o">.</span><span class="n">PARITY_NONE</span>
+        <span class="n">ser</span><span class="o">.</span><span class="n">bytesize</span> <span class="o">=</span> <span class="n">serial</span><span class="o">.</span><span class="n">EIGHTBITS</span>
+        <span class="n">ser</span><span class="o">.</span><span class="n">stopbits</span> <span class="o">=</span> <span class="n">serial</span><span class="o">.</span><span class="n">STOPBITS_ONE</span>
+        <span class="n">ser</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout_s</span> <span class="c1"># seconds</span>
+        <span class="n">ser</span><span class="o">.</span><span class="n">open</span><span class="p">()</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">ser</span><span class="o">.</span><span class="n">is_open</span> <span class="o">!=</span> <span class="kc">True</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ConnectionError</span><span class="p">(</span><span class="s2">&quot;Serial port failed to open&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span> <span class="o">=</span> <span class="n">ser</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># In case the controller is in trigger mode first stop it</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">trigger_mode</span><span class="p">(</span><span class="s1">&#39;stop&#39;</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">raise</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Successfully connected to VCMIni on </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">serial_port</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Show all the parameters of the valve controller.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;VC-Mini on </span><span class="si">%s</span><span class="s2">, active valve: </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> \
+            <span class="s2">&quot;  EEPROM address/parameter set: </span><span class="si">%d</span><span class="s2">/</span><span class="si">%d</span><span class="se">\n</span><span class="s2">&quot;</span> \
+            <span class="s2">&quot;  Peak time: </span><span class="si">%10s</span><span class="s2"> us</span><span class="se">\n</span><span class="s2">&quot;</span> \
+            <span class="s2">&quot;  Open time: </span><span class="si">%10s</span><span class="s2"> us</span><span class="se">\n</span><span class="s2">&quot;</span> \
+            <span class="s2">&quot;  Cycle time: </span><span class="si">%9s</span><span class="s2"> us</span><span class="se">\n</span><span class="s2">&quot;</span> \
+            <span class="s2">&quot;  Peak current: </span><span class="si">%7.2f</span><span class="s2"> A</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">port</span><span class="p">,</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">active_valve</span><span class="p">(),</span>
+                              <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_address</span><span class="p">()[</span><span class="mi">0</span><span class="p">]),</span>
+                              <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_load_parameters</span><span class="p">())</span><span class="o">%</span><span class="mi">4</span><span class="p">,</span>
+                              <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">peak_time</span><span class="p">()</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">,</span><span class="s1">&#39; &#39;</span><span class="p">),</span> 
+                              <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">open_time</span><span class="p">()</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">,</span><span class="s1">&#39; &#39;</span><span class="p">),</span> 
+                              <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cycle_time</span><span class="p">()</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">,</span><span class="s1">&#39; &#39;</span><span class="p">),</span> 
+                              <span class="bp">self</span><span class="o">.</span><span class="n">peak_current</span><span class="p">(),)</span>
+        
+<div class="viewcode-block" id="VCMini.close">
+<a class="viewcode-back" href="../../vcmini.html#sheetjet.VCMini.close">[docs]</a>
+    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Close the serial connection.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="VCMini.reopen">
+<a class="viewcode-back" href="../../vcmini.html#sheetjet.VCMini.reopen">[docs]</a>
+    <span class="k">def</span> <span class="nf">reopen</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reopen the serial connection.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">open</span><span class="p">()</span>
+        <span class="k">if</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">is_open</span> <span class="o">!=</span> <span class="kc">True</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ConnectionError</span><span class="p">(</span><span class="s2">&quot;Serial port failed to open&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">init_ram</span><span class="p">()</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Successfully connected to VCMIni on </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">port</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="VCMini.peak_time">
+<a class="viewcode-back" href="../../vcmini.html#sheetjet.VCMini.peak_time">[docs]</a>
+    <span class="k">def</span> <span class="nf">peak_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">valve</span> <span class="o">=</span> <span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">override_limits</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Query or set peak current time to initiate valve opening, in us.&quot;&quot;&quot;</span>
+        <span class="k">if</span><span class="p">(</span><span class="nb">set</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span><span class="p">(</span><span class="nb">set</span> <span class="o">&lt;</span> <span class="mi">100</span> <span class="ow">or</span> <span class="nb">set</span>  <span class="o">&gt;</span> <span class="mi">500</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">override_limits</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Peak time must be between 100 and 500 us&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ram</span><span class="o">.</span><span class="n">peak_time</span> <span class="o">=</span> <span class="nb">set</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="nb">set</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="VCMini.open_time">
+<a class="viewcode-back" href="../../vcmini.html#sheetjet.VCMini.open_time">[docs]</a>
+    <span class="k">def</span> <span class="nf">open_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">override_limits</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Query or set valve open time in us.&quot;&quot;&quot;</span>
+        <span class="k">if</span><span class="p">(</span><span class="nb">set</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nb">set</span> <span class="o">&lt;</span> <span class="mi">400</span> <span class="ow">or</span> <span class="nb">set</span> <span class="o">&gt;</span> <span class="mi">9999999</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">override_limits</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Open time must be between 400 and 9999999 us&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s1">&#39;B&#39;</span><span class="p">,</span> <span class="nb">set</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="VCMini.cycle_time">
+<a class="viewcode-back" href="../../vcmini.html#sheetjet.VCMini.cycle_time">[docs]</a>
+    <span class="k">def</span> <span class="nf">cycle_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Query or set firing frequency in us.&quot;&quot;&quot;</span>
+        <span class="k">if</span><span class="p">(</span><span class="nb">set</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;c&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">set</span> <span class="o">&lt;</span> <span class="mi">10</span> <span class="ow">or</span> <span class="nb">set</span> <span class="o">&gt;</span> <span class="mi">9999999</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cycle time must be between 10 and 9999999 us&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="nb">set</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="VCMini.peak_current">
+<a class="viewcode-back" href="../../vcmini.html#sheetjet.VCMini.peak_current">[docs]</a>
+    <span class="k">def</span> <span class="nf">peak_current</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">raw</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Query or set peak current.</span>
+<span class="sd">        If raw is True the function takes a returns directly the parameter D as stated in the manual.</span>
+<span class="sd">        The actual peak current I_p is given by I_p = 450mA + (D * 50mA). </span>
+<span class="sd">        If raw is False the function accepts and returns values in Amperes.</span>
+<span class="sd">        Should be kept at 1 A (meaning value 11).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span><span class="p">(</span><span class="nb">set</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;d&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">raw</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">ret</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="mf">0.45</span> <span class="o">+</span> <span class="p">(</span><span class="n">ret</span> <span class="o">*</span> <span class="mf">0.05</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">raw</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+                <span class="nb">set</span> <span class="o">=</span> <span class="nb">round</span><span class="p">((</span><span class="nb">set</span> <span class="o">-</span> <span class="mf">0.45</span><span class="p">)</span><span class="o">/</span><span class="mf">0.05</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">set</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">set</span> <span class="o">&gt;</span> <span class="mi">15</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Peak current must be between 0 and 15&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s1">&#39;D&#39;</span><span class="p">,</span> <span class="nb">set</span><span class="p">)</span></div>
+
+        
+<div class="viewcode-block" id="VCMini.num_shots">
+<a class="viewcode-back" href="../../vcmini.html#sheetjet.VCMini.num_shots">[docs]</a>
+    <span class="k">def</span> <span class="nf">num_shots</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Query or set number of shots to fire before stopping. 0 means infinite.&quot;&quot;&quot;</span>
+        <span class="k">if</span><span class="p">(</span><span class="nb">set</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;g&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">set</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">set</span> <span class="o">&gt;</span> <span class="mi">65535</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Number of shots must be between 0 and 65535&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s1">&#39;G&#39;</span><span class="p">,</span> <span class="nb">set</span><span class="p">)</span>            </div>
+
+
+<div class="viewcode-block" id="VCMini.valve_status">
+<a class="viewcode-back" href="../../vcmini.html#sheetjet.VCMini.valve_status">[docs]</a>
+    <span class="k">def</span> <span class="nf">valve_status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the active status for each of the two valves as a tuple.&quot;&quot;&quot;</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;q&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">v</span> <span class="o">&amp;</span> <span class="mh">0x10</span><span class="p">,</span> <span class="n">v</span> <span class="o">&amp;</span> <span class="mh">0x01</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="VCMini.shot_counter">
+<a class="viewcode-back" href="../../vcmini.html#sheetjet.VCMini.shot_counter">[docs]</a>
+    <span class="k">def</span> <span class="nf">shot_counter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">valve</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the shot counter for the specified valve.</span>
+<span class="sd">        </span>
+<span class="sd">        The shot counter is volatile, at power-on it is set to 0.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">valve</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">valve</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Invalid valve number&quot;</span><span class="p">)</span></div>
+
+        
+<div class="viewcode-block" id="VCMini.zero_shot_counter">
+<a class="viewcode-back" href="../../vcmini.html#sheetjet.VCMini.zero_shot_counter">[docs]</a>
+    <span class="k">def</span> <span class="nf">zero_shot_counter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">valve</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Zero the shot counter for the specified valve.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">valve</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;I&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">valve</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;J&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid valve number&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="VCMini.total_shot_counter">
+<a class="viewcode-back" href="../../vcmini.html#sheetjet.VCMini.total_shot_counter">[docs]</a>
+    <span class="k">def</span> <span class="nf">total_shot_counter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">valve</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the total shot counter for the specified valve.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">valve</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">high</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;u&#39;</span><span class="p">)</span>
+            <span class="n">low</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;v&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">high</span><span class="o">&lt;&lt;</span><span class="mi">24</span><span class="p">)</span> <span class="o">|</span> <span class="n">low</span>
+        <span class="k">elif</span> <span class="n">valve</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">high</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
+            <span class="n">low</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">high</span><span class="o">&lt;&lt;</span><span class="mi">24</span><span class="p">)</span> <span class="o">|</span> <span class="n">low</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid valve number&quot;</span><span class="p">)</span></div>
+
+        
+<div class="viewcode-block" id="VCMini.active_valve">
+<a class="viewcode-back" href="../../vcmini.html#sheetjet.VCMini.active_valve">[docs]</a>
+    <span class="k">def</span> <span class="nf">active_valve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">valve</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">param_set</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">save_on_change</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Query or set the active valve. Changes to most parameters only affect the active valve.</span>
+<span class="sd">        valve can be None, v1 or v2. If it is None, the current active valve is returned.</span>
+
+<span class="sd">        param_set is a number from 0-3 that defines what parameter set is loaded from the controller.</span>
+<span class="sd">        save_on_change is a boolean that defines if the current parameters should be saved to the EEPROM before changing the active valve.</span>
+<span class="sd">        If they are not saved, any changes made to the parameters of the previously active valve will be lost.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">valve</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">cur_param_set</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_load_parameters</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">cur_param_set</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">cur_param_set</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s1">&#39;v1&#39;</span>
+            <span class="k">elif</span> <span class="n">cur_param_set</span> <span class="o">&gt;=</span> <span class="mi">4</span> <span class="ow">and</span> <span class="n">cur_param_set</span> <span class="o">&lt;</span> <span class="mi">8</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s1">&#39;v2&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid parameter set&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">valve</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;v1&#39;</span><span class="p">,</span> <span class="s1">&#39;v2&#39;</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid valve - </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">valve</span><span class="p">))</span> 
+            <span class="k">if</span> <span class="n">param_set</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">param_set</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Parameter set must be between 0 and 3&quot;</span><span class="p">)</span>
+            
+            <span class="n">cur_param_set</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_load_parameters</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">save_on_change</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_save_parameters</span><span class="p">(</span><span class="n">position</span> <span class="o">=</span> <span class="n">cur_param_set</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="n">valve</span> <span class="o">==</span> <span class="s1">&#39;v1&#39;</span><span class="p">:</span>
+                <span class="n">offset</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">elif</span> <span class="n">valve</span> <span class="o">==</span> <span class="s1">&#39;v2&#39;</span><span class="p">:</span>
+                <span class="n">offset</span> <span class="o">=</span> <span class="mi">4</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid valve - </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">valve</span><span class="p">))</span>            
+            <span class="bp">self</span><span class="o">.</span><span class="n">_load_parameters</span><span class="p">(</span><span class="n">position</span> <span class="o">=</span> <span class="n">param_set</span><span class="o">+</span><span class="n">offset</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_address</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Query or set the current module address of the valve controller.</span>
+<span class="sd">        Returns the module address and module type as a tuple.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span><span class="p">(</span><span class="nb">set</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="nb">set</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">)</span>
+            <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">value</span>
+            <span class="n">addr</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">module_type</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="k">return</span> <span class="n">addr</span><span class="p">,</span> <span class="n">module_type</span>
+            
+
+    <span class="k">def</span> <span class="nf">_load_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">position</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads the a parameter set from the given EEPROM position.</span>
+<span class="sd">        If position is `None` return the current parameters position.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">position</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;p&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">position</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">position</span> <span class="o">&gt;</span> <span class="mi">7</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Parameter position must be between 0 and 7&quot;</span><span class="p">)</span>
+            <span class="n">ret</span> <span class="o">=</span>  <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;n&#39;</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">ret</span>
+
+    <span class="k">def</span> <span class="nf">_save_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">position</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Saves the active set of parameters to the given EEPROM position.</span>
+<span class="sd">        If position is `None` return the current parameters position.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">position</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;p&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">position</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">position</span> <span class="o">&gt;</span> <span class="mi">7</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Parameter position must be between 0 and 7&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s1">&#39;N&#39;</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>
+            
+<div class="viewcode-block" id="VCMini.trigger_mode">
+<a class="viewcode-back" href="../../vcmini.html#sheetjet.VCMini.trigger_mode">[docs]</a>
+    <span class="k">def</span> <span class="nf">trigger_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;stop&#39;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the trigger mode.</span>
+
+<span class="sd">        While a trigger mode is active, no further entries are possible on the corresponding module.</span>
+<span class="sd">        Only the command ``trigger_mode(&#39;stop&#39;)`` (exit external trigger mode) can be performed.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        mode: {&#39;single&#39;, &#39;pulse&#39;, &#39;series&#39;, &#39;pulse series&#39;, &#39;stop&#39;}</span>
+<span class="sd">            * &#39;single&#39; : Arm single shot on valves V1 and V2 triggered via external hardware trigger</span>
+<span class="sd">            * &#39;pulse&#39; : Arm single shot on valves V1 and V2 with the opening time controlled by the length of the external hardware trigger</span>
+<span class="sd">            * &#39;series&#39; : Arm shot series on valves V1 and V2 triggered via external hardware trigger</span>
+<span class="sd">            * &#39;pulse series&#39; : Arm shot series on valves V1 and V2 which continues for as long as the external hardware trigger stays high</span>
+<span class="sd">            * &#39;stop&#39; : Exit external trigger mode and disarm all triggers</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cmd_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;single&#39;</span><span class="p">:</span> <span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="s1">&#39;pulse&#39;</span><span class="p">:</span> <span class="s1">&#39;T&#39;</span><span class="p">,</span> <span class="s1">&#39;series&#39;</span><span class="p">:</span> <span class="s1">&#39;P&#39;</span><span class="p">,</span> <span class="s1">&#39;pulse series&#39;</span><span class="p">:</span> <span class="s1">&#39;L&#39;</span><span class="p">,</span> <span class="s1">&#39;stop&#39;</span><span class="p">:</span> <span class="s1">&#39;S&#39;</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cmd_dict</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid trigger mode&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">cmd_dict</span><span class="p">[</span><span class="n">mode</span><span class="p">])</span></div>
+
+    
+<div class="viewcode-block" id="VCMini.fire">
+<a class="viewcode-back" href="../../vcmini.html#sheetjet.VCMini.fire">[docs]</a>
+    <span class="k">def</span> <span class="nf">fire</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shot</span><span class="o">=</span><span class="s1">&#39;stop&#39;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Open the valves according to the specified mode using a software trigger.</span>
+
+<span class="sd">        The command delay after receiving the command character until the first shot is fired is approximately</span>
+<span class="sd">        2ms. For time-critical applications you should use the capabilities of shot with hardware trigger.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        shot: {&#39;v1&#39;, &#39;v2&#39;, &#39;both&#39;, &#39;series v1&#39;, &#39;series v2&#39;, &#39;series both&#39;, &#39;stop&#39;} </span>
+<span class="sd">            * &#39;v1&#39; : Single shot of the v1 valve</span>
+<span class="sd">            * &#39;v2&#39; : Single shot of the v2 valve</span>
+<span class="sd">            * &#39;both&#39; : Single shot of both valves simultaneously</span>
+<span class="sd">            * &#39;series v1&#39; : Series of shots of the v1 valve until num_shots() is reached</span>
+<span class="sd">            * &#39;series v2&#39; : Series of shots of the v2 valve until num_shots() is reached</span>
+<span class="sd">            * &#39;series both&#39; : Series of shots of both valves until until &#39;stop&#39; is issued</span>
+<span class="sd">            * &#39;stop&#39; : Stop any series of shots</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cmd_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;v1&#39;</span><span class="p">:</span> <span class="s1">&#39;Y&#39;</span><span class="p">,</span> <span class="s1">&#39;v2&#39;</span><span class="p">:</span> <span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="s1">&#39;both&#39;</span><span class="p">:</span> <span class="s1">&#39;V&#39;</span><span class="p">,</span> <span class="s1">&#39;series v1&#39;</span><span class="p">:</span> <span class="s1">&#39;Q&#39;</span><span class="p">,</span> <span class="s1">&#39;series v2&#39;</span><span class="p">:</span> <span class="s1">&#39;R&#39;</span><span class="p">,</span> <span class="s1">&#39;series both&#39;</span><span class="p">:</span> <span class="s1">&#39;U&#39;</span><span class="p">,</span> <span class="s1">&#39;stop&#39;</span><span class="p">:</span> <span class="s1">&#39;S&#39;</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">shot</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cmd_dict</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid shot&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">cmd_dict</span><span class="p">[</span><span class="n">shot</span><span class="p">])</span></div>
+
+
+
+    
+
+<div class="viewcode-block" id="VCMini.execute">
+<a class="viewcode-back" href="../../vcmini.html#sheetjet.VCMini.execute">[docs]</a>
+    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Send an execution command to the controller.</span>
+<span class="sd">        Execution commands are defined in the Gyger VC Mini manual.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">param</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid parameter&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">))</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">read_until</span><span class="p">(</span><span class="s1">&#39;&gt;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">)</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">ret</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">line</span> <span class="o">!=</span> <span class="n">param</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">line</span> <span class="o">==</span> <span class="s1">&#39;?&#39;</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Valve is busy!&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>            
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Error reading </span><span class="si">%s</span><span class="s2">. Got </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">ret</span><span class="p">))</span>
+        <span class="n">prompt</span> <span class="o">=</span> <span class="n">ret</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">prompt</span> <span class="o">!=</span> <span class="s1">&#39;</span><span class="se">\r</span><span class="s1">&gt;&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Error reading </span><span class="si">%s</span><span class="s2">. Got </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">ret</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="VCMini.set_parameter">
+<a class="viewcode-back" href="../../vcmini.html#sheetjet.VCMini.set_parameter">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Send a parametrization command to the controller.</span>
+<span class="sd">        Parametrization commands are defined in the Gyger VC Mini manual.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">param</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid parameter&quot;</span><span class="p">)</span>
+        <span class="k">if</span><span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">int</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Value must be an integer&quot;</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">((</span><span class="s1">&#39;</span><span class="si">%d%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span><span class="n">param</span><span class="p">))</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">))</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">read_until</span><span class="p">(</span><span class="s1">&#39;&gt;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">)</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">ret</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">if</span><span class="p">(</span><span class="n">line</span> <span class="o">!=</span> <span class="s1">&#39;</span><span class="si">%d%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span><span class="n">param</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">line</span> <span class="o">==</span> <span class="s1">&#39;?&#39;</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Valve is busy!&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>                
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Error reading </span><span class="si">%s</span><span class="s2">. Got </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">ret</span><span class="p">))</span>
+        <span class="n">prompt</span> <span class="o">=</span> <span class="n">ret</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">prompt</span> <span class="o">!=</span> <span class="s1">&#39;</span><span class="se">\r</span><span class="s1">&gt;&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Error reading </span><span class="si">%s</span><span class="s2">. Got </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">ret</span><span class="p">))</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">value</span></div>
+
+                    
+<div class="viewcode-block" id="VCMini.query">
+<a class="viewcode-back" href="../../vcmini.html#sheetjet.VCMini.query">[docs]</a>
+    <span class="k">def</span> <span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Send a query command parameters to the controller.</span>
+<span class="sd">        Query command parameters are defined in the Gyger VC Mini manual.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">param</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid parameter&quot;</span><span class="p">)</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">))</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="s1">&#39;.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">param</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span><span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">int</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Value must be an integer&quot;</span><span class="p">)</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">param</span> <span class="o">!=</span> <span class="s1">&#39;n&#39;</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Value can only be set when param=&#39;n&#39;&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">((</span><span class="s1">&#39;</span><span class="si">%d%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span><span class="n">param</span><span class="p">))</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">))</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%d</span><span class="s1">.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">param</span><span class="p">)</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">read_until</span><span class="p">(</span><span class="s1">&#39;&gt;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">)</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">ret</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">if</span><span class="p">(</span><span class="n">line</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">output</span><span class="p">)]</span> <span class="o">!=</span> <span class="n">output</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">line</span> <span class="o">==</span> <span class="s1">&#39;?&#39;</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Valve is busy!&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Error reading </span><span class="si">%s</span><span class="s2">. Got </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">ret</span><span class="p">))</span>
+        <span class="n">prompt</span> <span class="o">=</span> <span class="n">ret</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">prompt</span> <span class="o">!=</span> <span class="s1">&#39;</span><span class="se">\r</span><span class="s1">&gt;&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Error reading </span><span class="si">%s</span><span class="s2">. Got </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">ret</span><span class="p">))</span>
+        
+        <span class="k">if</span><span class="p">(</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">output</span><span class="p">):]</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># Some return values are not integers</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+        <span class="k">return</span> <span class="n">value</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Filipe Maia.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

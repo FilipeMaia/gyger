@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sheetjet.tg5012a &mdash; sheetjet 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=01f34227"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            sheetjet
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../discovery.html">Device Discovery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mxii.html">MXII</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../vcmini.html">VCMini</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tg5012a.html">TG5012A</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Known Issues</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../known_issues.html">Gyger SMLD micro valves</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../known_issues.html#duplicate-com-ports-under-windows">Duplicate COM ports under Windows</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">sheetjet</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">sheetjet.tg5012a</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sheetjet.tg5012a</h1><div class="highlight"><pre>
+<span></span>
+
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">serial</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<div class="viewcode-block" id="TG5012A">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A">[docs]</a>
+<span class="k">class</span> <span class="nc">TG5012A</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Control of the Aim TTi TG5012A function generator.</span>
+
+<span class="sd">    Based on the manual found at </span>
+<span class="sd">    https://resources.aimtti.com/manuals/TG5012A_2512A_5011A+2511A_Instructions-Iss8.pdf</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">serial_port</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">address</span><span class="o">=</span><span class="s1">&#39;t539639.local&#39;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">9221</span><span class="p">,</span> <span class="n">auto_local</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">error_check</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Connects to a TF5012A function generator using the given serial_port or LAN address and port</span>
+<span class="sd">        </span>
+<span class="sd">        If auto_local is true (default), the instrument will be set to local mode after each command.</span>
+<span class="sd">        if error_check is true (default), the instrument will check for errors after each command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">terminator</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sock</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">auto_local</span> <span class="o">=</span> <span class="n">auto_local</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error_check</span> <span class="o">=</span> <span class="n">error_check</span>
+        <span class="k">if</span> <span class="n">serial_port</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Prefer serial over LAN communication        </span>
+            <span class="n">ser</span> <span class="o">=</span> <span class="n">serial</span><span class="o">.</span><span class="n">Serial</span><span class="p">(</span><span class="n">port</span> <span class="o">=</span> <span class="n">serial_port</span><span class="p">)</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">ser</span><span class="o">.</span><span class="n">is_open</span> <span class="o">!=</span> <span class="kc">True</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ConnectionError</span><span class="p">(</span><span class="s2">&quot;Serial port failed to open&quot;</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ser</span> <span class="o">=</span> <span class="n">ser</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">())</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Successfully connected to TG5012A on </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">serial_port</span><span class="p">))</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">ser</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="k">raise</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Open LAN connection</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sock</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="n">address</span><span class="p">,</span> <span class="n">port</span><span class="p">))</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">())</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Successfully connected to TG5012A on </span><span class="si">%s</span><span class="s2">:</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="n">port</span><span class="p">))</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="k">raise</span>
+        
+<div class="viewcode-block" id="TG5012A.close">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.close">[docs]</a>
+    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Close the serial connection.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="TG5012A.reopen">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.reopen">[docs]</a>
+    <span class="k">def</span> <span class="nf">reopen</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reopen the serial connection.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">open</span><span class="p">()</span>
+        <span class="k">if</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">is_open</span> <span class="o">!=</span> <span class="kc">True</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ConnectionError</span><span class="p">(</span><span class="s2">&quot;Serial port failed to open&quot;</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Successfully connected to </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">port</span><span class="p">))</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">())</span>  </div>
+
+
+    <span class="c1"># Convenience functions</span>
+<div class="viewcode-block" id="TG5012A.pulse">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.pulse">[docs]</a>
+    <span class="k">def</span> <span class="nf">pulse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">rise</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span> <span class="n">fall</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">delay</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">output</span> <span class="o">=</span> <span class="s2">&quot;ON&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the output to a pulse with the given parameters&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wave</span><span class="p">(</span><span class="s2">&quot;PULSE&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frequency</span><span class="p">(</span><span class="n">freq</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pulse_width</span><span class="p">(</span><span class="n">width</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pulse_rise</span><span class="p">(</span><span class="n">rise</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pulse_fall</span><span class="p">(</span><span class="n">fall</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pulse_delay</span><span class="p">(</span><span class="n">delay</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">high</span><span class="p">(</span><span class="n">high</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">low</span><span class="p">(</span><span class="n">low</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="p">(</span><span class="n">phase</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">output</span><span class="p">)</span></div>
+
+
+    
+    <span class="c1"># Channel Selection</span>
+<div class="viewcode-block" id="TG5012A.channel">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.channel">[docs]</a>
+    <span class="k">def</span> <span class="nf">channel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Queries or sets the active channel&quot;&quot;&quot;</span>
+        <span class="k">if</span><span class="p">(</span><span class="nb">set</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;CHN?&quot;</span><span class="p">)</span>        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;CHN&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+
+    <span class="c1"># Continuous Carrier Wave Commands</span>
+<div class="viewcode-block" id="TG5012A.wave">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.wave">[docs]</a>
+    <span class="k">def</span> <span class="nf">wave</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="s2">&quot;PULSE&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the output waveform&quot;&quot;&quot;</span>
+        <span class="n">valid_waveforms</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;SINE&quot;</span><span class="p">,</span> <span class="s2">&quot;SQUARE&quot;</span><span class="p">,</span> <span class="s2">&quot;TRIANG&quot;</span><span class="p">,</span> <span class="s2">&quot;RAMP&quot;</span><span class="p">,</span> <span class="s2">&quot;PULSE&quot;</span><span class="p">,</span> <span class="s2">&quot;NOISE&quot;</span><span class="p">,</span> <span class="s2">&quot;ARB&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">set</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_waveforms</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid waveform. It should be one of </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">valid_waveforms</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;WAVE&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.frequency">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.frequency">[docs]</a>
+    <span class="k">def</span> <span class="nf">frequency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the output frequency in Hz&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;FREQ&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.period">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.period">[docs]</a>
+    <span class="k">def</span> <span class="nf">period</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the output period in seconds&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;PER&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.amplitude_range">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.amplitude_range">[docs]</a>
+    <span class="k">def</span> <span class="nf">amplitude_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="s2">&quot;AUTO&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the output amplitude range&quot;&quot;&quot;</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;AUTO&quot;</span><span class="p">,</span> <span class="s2">&quot;HOLD&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">set</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid amplitude range. It should be one of </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">valid</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;AMPLRNG&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.amplitude_unit">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.amplitude_unit">[docs]</a>
+    <span class="k">def</span> <span class="nf">amplitude_unit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="s2">&quot;VPP&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the output amplitude unit&quot;&quot;&quot;</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;VPP&quot;</span><span class="p">,</span> <span class="s2">&quot;VRMS&quot;</span><span class="p">,</span> <span class="s2">&quot;DBM&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">set</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid amplitude unit. It should be one of </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">valid</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;AMPUNIT&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span>    </div>
+
+
+<div class="viewcode-block" id="TG5012A.amplitude">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.amplitude">[docs]</a>
+    <span class="k">def</span> <span class="nf">amplitude</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the output amplitude, in volts&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;AMPL&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+        
+<div class="viewcode-block" id="TG5012A.offset">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.offset">[docs]</a>
+    <span class="k">def</span> <span class="nf">offset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the DC offset, in volts&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;DCOFFS&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.high">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.high">[docs]</a>
+    <span class="k">def</span> <span class="nf">high</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the amplitude high level, in volts&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;HILVL&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.low">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.low">[docs]</a>
+    <span class="k">def</span> <span class="nf">low</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the amplitude low level, in volts&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;LOLVL&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.output">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.output">[docs]</a>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="s2">&quot;ON&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the output on, off, normal or invert&quot;&quot;&quot;</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;ON&quot;</span><span class="p">,</span> <span class="s2">&quot;OFF&quot;</span><span class="p">,</span> <span class="s2">&quot;NORMAL&quot;</span><span class="p">,</span> <span class="s2">&quot;INVERT&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">set</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid output. It should be one of </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">valid</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;OUTPUT&quot;</span><span class="p">,</span> <span class="nb">set</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.output_load">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.output_load">[docs]</a>
+    <span class="k">def</span> <span class="nf">output_load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="mi">50</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the output load, in Ohms&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">set</span> <span class="o">!=</span> <span class="s1">&#39;OPEN&#39;</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">set</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">set</span> <span class="o">&gt;</span> <span class="mi">10000</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid output load. It should be between 1 and 10000 or OPEN&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;ZLOAD&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="TG5012A.square_symmetry">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.square_symmetry">[docs]</a>
+    <span class="k">def</span> <span class="nf">square_symmetry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="mi">50</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the square wave symmetry, in percent&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">set</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">set</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid square symmetry. It should be between 0 and 100&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;SQRSYMM&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.ramp_symmetry">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.ramp_symmetry">[docs]</a>
+    <span class="k">def</span> <span class="nf">ramp_symmetry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="mi">50</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the ramp wave symmetry, in percent&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">set</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">set</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid ramp symmetry. It should be between 0 and 100&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;RMPSYMM&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.sync_output">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.sync_output">[docs]</a>
+    <span class="k">def</span> <span class="nf">sync_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="s2">&quot;OFF&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the sync output on or off&quot;&quot;&quot;</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;ON&quot;</span><span class="p">,</span> <span class="s2">&quot;OFF&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">set</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid sync output. It should be one of </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">valid</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;SYNCOUT&quot;</span><span class="p">,</span> <span class="nb">set</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.sync_type">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.sync_type">[docs]</a>
+    <span class="k">def</span> <span class="nf">sync_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="s2">&quot;AUTO&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the sync type&quot;&quot;&quot;</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;AUTO&quot;</span><span class="p">,</span> <span class="s2">&quot;CARRIER&quot;</span><span class="p">,</span> <span class="s2">&quot;MODULATION&quot;</span><span class="p">,</span> <span class="s2">&quot;SWEEP&quot;</span><span class="p">,</span> <span class="s2">&quot;BURST&quot;</span><span class="p">,</span> <span class="s2">&quot;TRIGGER&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">set</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid sync type. It should be one of </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">valid</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;SYNCTYPE&quot;</span><span class="p">,</span> <span class="nb">set</span><span class="p">)</span></div>
+
+        
+<div class="viewcode-block" id="TG5012A.phase">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.phase">[docs]</a>
+    <span class="k">def</span> <span class="nf">phase</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the output phase, in degrees&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;PHASE&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.align">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.align">[docs]</a>
+    <span class="k">def</span> <span class="nf">align</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sends signal to align zero phase reference of both channels&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;ALIGN&quot;</span><span class="p">)</span></div>
+
+    
+    <span class="c1"># Pulse Generator Commands</span>
+
+<div class="viewcode-block" id="TG5012A.pulse_frequency">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.pulse_frequency">[docs]</a>
+    <span class="k">def</span> <span class="nf">pulse_frequency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the pulse frequency, in Hz&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;PULSFREQ&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.pulse_period">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.pulse_period">[docs]</a>
+    <span class="k">def</span> <span class="nf">pulse_period</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the pulse period, in seconds&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;PULSPER&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.pulse_width">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.pulse_width">[docs]</a>
+    <span class="k">def</span> <span class="nf">pulse_width</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the pulse width, in seconds&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;PULSWID&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.pulse_symmetry">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.pulse_symmetry">[docs]</a>
+    <span class="k">def</span> <span class="nf">pulse_symmetry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="mi">50</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the pulse symmetry, in percent&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">set</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">set</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid pulse symmetry. It should be between 0 and 100&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;PULSSYMM&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.pulse_edge">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.pulse_edge">[docs]</a>
+    <span class="k">def</span> <span class="nf">pulse_edge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the pulse waveform edges (positive and negative edge) in seconds. </span>
+<span class="sd">        Value zero sets to the minimum value allowed.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;PULSEDGE&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="TG5012A.pulse_range">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.pulse_range">[docs]</a>
+    <span class="k">def</span> <span class="nf">pulse_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the pulse rise and fall range to 1, 2 or 3.</span>
+<span class="sd">        1 - sets the range from 5ns to 99.9ns</span>
+<span class="sd">        2 - sets the range from 100ns to 1.999us</span>
+<span class="sd">        3 - sets the range from 2us to 40us&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">set</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid pulse range. It should be 1,2 or 3&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;PULSRANGE&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="TG5012A.pulse_rise">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.pulse_rise">[docs]</a>
+    <span class="k">def</span> <span class="nf">pulse_rise</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the pulse rise time, in seconds&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;PULSRISE&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.pulse_fall">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.pulse_fall">[docs]</a>
+    <span class="k">def</span> <span class="nf">pulse_fall</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the pulse fall time, in seconds&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;PULSFALL&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.pulse_delay">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.pulse_delay">[docs]</a>
+    <span class="k">def</span> <span class="nf">pulse_delay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the pulse delay, in seconds&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;PULSDLY&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+    
+    <span class="c1"># Dual-channel Function Commands</span>
+
+<div class="viewcode-block" id="TG5012A.amplitude_coupling">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.amplitude_coupling">[docs]</a>
+    <span class="k">def</span> <span class="nf">amplitude_coupling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="s2">&quot;ON&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the amplitude coupling&quot;&quot;&quot;</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;ON&quot;</span><span class="p">,</span> <span class="s2">&quot;OFF&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">set</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid amplitude coupling. It should be one of </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">valid</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;AMPLCPLNG&quot;</span><span class="p">,</span> <span class="nb">set</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.output_coupling">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.output_coupling">[docs]</a>
+    <span class="k">def</span> <span class="nf">output_coupling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="s2">&quot;ON&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the output coupling&quot;&quot;&quot;</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;ON&quot;</span><span class="p">,</span> <span class="s2">&quot;OFF&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">set</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid output coupling. It should be one of </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">valid</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;OUTPUTCPLNG&quot;</span><span class="p">,</span> <span class="nb">set</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.frequency_coupling">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.frequency_coupling">[docs]</a>
+    <span class="k">def</span> <span class="nf">frequency_coupling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="s2">&quot;ON&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the frequency coupling&quot;&quot;&quot;</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;ON&quot;</span><span class="p">,</span> <span class="s2">&quot;OFF&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">set</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid frequency coupling. It should be one of </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">valid</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;FRQCPLSWT&quot;</span><span class="p">,</span> <span class="nb">set</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.frequency_coupling_type">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.frequency_coupling_type">[docs]</a>
+    <span class="k">def</span> <span class="nf">frequency_coupling_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="s2">&quot;RATIO&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the frequency coupling type&quot;&quot;&quot;</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;RATIO&quot;</span><span class="p">,</span> <span class="s2">&quot;OFFSET&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">set</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid frequency coupling type. It should be one of </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">valid</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;FRQCPLTYP&quot;</span><span class="p">,</span> <span class="nb">set</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TG5012A.frequency_coupling_ratio">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.frequency_coupling_ratio">[docs]</a>
+    <span class="k">def</span> <span class="nf">frequency_coupling_ratio</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the frequency coupling ratio&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;FRQCPLRAT&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.frequency_coupling_offset">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.frequency_coupling_offset">[docs]</a>
+    <span class="k">def</span> <span class="nf">frequency_coupling_offset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the frequency coupling offset in Hz&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;FRQCPLOFS&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.pulse_frequency_coupling">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.pulse_frequency_coupling">[docs]</a>
+    <span class="k">def</span> <span class="nf">pulse_frequency_coupling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="s2">&quot;ON&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the pulse frequency coupling&quot;&quot;&quot;</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;ON&quot;</span><span class="p">,</span> <span class="s2">&quot;OFF&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">set</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid pulse frequency coupling. It should be one of </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">valid</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;PLSFRQCPLSWT&quot;</span><span class="p">,</span> <span class="nb">set</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.pulse_frequency_coupling_type">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.pulse_frequency_coupling_type">[docs]</a>
+    <span class="k">def</span> <span class="nf">pulse_frequency_coupling_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="s2">&quot;RATIO&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the pulse frequency coupling type&quot;&quot;&quot;</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;RATIO&quot;</span><span class="p">,</span> <span class="s2">&quot;OFFSET&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">set</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid pulse frequency coupling type. It should be one of </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">valid</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;PLSFRQCPLTYP&quot;</span><span class="p">,</span> <span class="nb">set</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.pulse_frequency_coupling_ratio">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.pulse_frequency_coupling_ratio">[docs]</a>
+    <span class="k">def</span> <span class="nf">pulse_frequency_coupling_ratio</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the pulse frequency coupling ratio&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;PLSFRQCPLRAT&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.pulse_frequency_coupling_offset">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.pulse_frequency_coupling_offset">[docs]</a>
+    <span class="k">def</span> <span class="nf">pulse_frequency_coupling_offset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the pulse frequency coupling offset in Hz&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;PLSFRQCPLOFS&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">set</span><span class="p">))</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.tracking">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.tracking">[docs]</a>
+    <span class="k">def</span> <span class="nf">tracking</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span> <span class="o">=</span> <span class="s2">&quot;EQUAL&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set channel tracking to OFF, EQUAL or INVERT&quot;&quot;&quot;</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;OFF&quot;</span><span class="p">,</span> <span class="s2">&quot;EQUAL&quot;</span><span class="p">,</span> <span class="s2">&quot;INVERT&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">set</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid tracking. It should be one of </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">valid</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;TRACKING&quot;</span><span class="p">,</span> <span class="nb">set</span><span class="p">)</span></div>
+
+    
+    
+    <span class="c1"># System and Status Commands</span>
+<div class="viewcode-block" id="TG5012A.query_error">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.query_error">[docs]</a>
+    <span class="k">def</span> <span class="nf">query_error</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Query and clear Query Error Register&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;QER?&quot;</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.execution_error">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.execution_error">[docs]</a>
+    <span class="k">def</span> <span class="nf">execution_error</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Query and clear Execution Error Register&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;EER?&quot;</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.clear_status">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.clear_status">[docs]</a>
+    <span class="k">def</span> <span class="nf">clear_status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clears the status registers&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;*CLS&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TG5012A.reset">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.reset">[docs]</a>
+    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resets the instrument&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;*RST&quot;</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.save">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.save">[docs]</a>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Saves the current settings to a non-volatile memory location.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;*SAV&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">addr</span><span class="p">))</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.recall">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.recall">[docs]</a>
+    <span class="k">def</span> <span class="nf">recall</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Recalls settings from a non-volatile memory location.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;*RCL&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">addr</span><span class="p">))</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.id">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.id">[docs]</a>
+    <span class="k">def</span> <span class="nf">id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the ID string of the instrument&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;*IDN?&quot;</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.wait_for_completion">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.wait_for_completion">[docs]</a>
+    <span class="k">def</span> <span class="nf">wait_for_completion</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Waits for the instrument to complete its tasks&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;*OPC?&quot;</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.beep">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.beep">[docs]</a>
+    <span class="k">def</span> <span class="nf">beep</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sounds the instrument&#39;s beeper&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;BEEP&quot;</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.local">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.local">[docs]</a>
+    <span class="k">def</span> <span class="nf">local</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the instrument to local mode&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;LOCAL&quot;</span><span class="p">)</span>    </div>
+
+
+<div class="viewcode-block" id="TG5012A.query">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.query">[docs]</a>
+    <span class="k">def</span> <span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cmd</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">cmd</span> <span class="o">!=</span> <span class="s2">&quot;QER?&quot;</span> <span class="ow">and</span> <span class="n">cmd</span> <span class="o">!=</span> <span class="s2">&quot;EER?&quot;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">error_check</span><span class="p">:</span>
+            <span class="n">err</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_error</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">err</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Instrument returned query error </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">err</span><span class="p">))</span>        
+        <span class="k">if</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">auto_local</span> <span class="ow">and</span> <span class="n">cmd</span> <span class="o">!=</span> <span class="s2">&quot;LOCAL&quot;</span> <span class="ow">and</span> <span class="n">cmd</span> <span class="o">!=</span> <span class="s2">&quot;QER?&quot;</span> <span class="ow">and</span> <span class="n">cmd</span> <span class="o">!=</span> <span class="s2">&quot;EER?&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">ret</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.set">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.set">[docs]</a>
+    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">cmd</span> <span class="o">+</span> <span class="s1">&#39; &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">error_check</span><span class="p">:</span>
+            <span class="n">err</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execution_error</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">err</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Instrument returned execution error </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">err</span><span class="p">))</span>
+        <span class="k">if</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">auto_local</span> <span class="ow">and</span> <span class="n">cmd</span> <span class="o">!=</span> <span class="s2">&quot;LOCAL&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="p">()</span>
+                    
+        <span class="k">return</span> <span class="n">ret</span></div>
+
+    
+<div class="viewcode-block" id="TG5012A.write">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.write">[docs]</a>
+    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write str to the instrument encoded as ascii as terminated&quot;&quot;&quot;</span>
+        <span class="nb">bytes</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminator</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="nb">bytes</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">bytes</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ConnectionError</span><span class="p">(</span><span class="s2">&quot;No connection to instrument&quot;</span><span class="p">)</span></div>
+
+        
+<div class="viewcode-block" id="TG5012A.read">
+<a class="viewcode-back" href="../../tg5012a.html#sheetjet.TG5012A.read">[docs]</a>
+    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read line from the instrument&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="p">:</span>
+            <span class="n">recv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">recv</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ConnectionError</span><span class="p">(</span><span class="s2">&quot;No connection to instrument&quot;</span><span class="p">)</span>        </div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Filipe Maia.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

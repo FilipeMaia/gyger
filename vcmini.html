@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VCMini &mdash; sheetjet 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=01f34227"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="TG5012A" href="tg5012a.html" />
+    <link rel="prev" title="MXII" href="mxii.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            sheetjet
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="discovery.html">Device Discovery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mxii.html">MXII</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">VCMini</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tg5012a.html">TG5012A</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Known Issues</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="known_issues.html">Gyger SMLD micro valves</a></li>
+<li class="toctree-l1"><a class="reference internal" href="known_issues.html#duplicate-com-ports-under-windows">Duplicate COM ports under Windows</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">sheetjet</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">VCMini</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/FilipeMaia/sheetjet/blob/main/docs/vcmini.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="vcmini">
+<h1>VCMini<a class="headerlink" href="#vcmini" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="sheetjet.VCMini">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sheetjet.</span></span><span class="sig-name descname"><span class="pre">VCMini</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">serial_port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'COM6'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baudrate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">38400</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sheetjet/gyger.html#VCMini"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sheetjet.VCMini" title="Link to this definition"></a></dt>
+<dd><p>Control a Gyger VC Mini valve controller.</p>
+<p>Based on the “Manual serial interface VC Mini rev 2.00 en” found at <a class="reference external" href="https://www.fgyger.ch/downloads/?lang=en">https://www.fgyger.ch/downloads/?lang=en</a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sheetjet.VCMini.active_valve">
+<span class="sig-name descname"><span class="pre">active_valve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">valve</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_set</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_on_change</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sheetjet/gyger.html#VCMini.active_valve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sheetjet.VCMini.active_valve" title="Link to this definition"></a></dt>
+<dd><p>Query or set the active valve. Changes to most parameters only affect the active valve.
+valve can be None, v1 or v2. If it is None, the current active valve is returned.</p>
+<p>param_set is a number from 0-3 that defines what parameter set is loaded from the controller.
+save_on_change is a boolean that defines if the current parameters should be saved to the EEPROM before changing the active valve.
+If they are not saved, any changes made to the parameters of the previously active valve will be lost.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sheetjet.VCMini.close">
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sheetjet/gyger.html#VCMini.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sheetjet.VCMini.close" title="Link to this definition"></a></dt>
+<dd><p>Close the serial connection.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sheetjet.VCMini.cycle_time">
+<span class="sig-name descname"><span class="pre">cycle_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">set</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sheetjet/gyger.html#VCMini.cycle_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sheetjet.VCMini.cycle_time" title="Link to this definition"></a></dt>
+<dd><p>Query or set firing frequency in us.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sheetjet.VCMini.execute">
+<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">param</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sheetjet/gyger.html#VCMini.execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sheetjet.VCMini.execute" title="Link to this definition"></a></dt>
+<dd><p>Send an execution command to the controller.
+Execution commands are defined in the Gyger VC Mini manual.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sheetjet.VCMini.fire">
+<span class="sig-name descname"><span class="pre">fire</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'stop'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sheetjet/gyger.html#VCMini.fire"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sheetjet.VCMini.fire" title="Link to this definition"></a></dt>
+<dd><p>Open the valves according to the specified mode using a software trigger.</p>
+<p>The command delay after receiving the command character until the first shot is fired is approximately
+2ms. For time-critical applications you should use the capabilities of shot with hardware trigger.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>shot</strong> (<em>{'v1'</em><em>, </em><em>'v2'</em><em>, </em><em>'both'</em><em>, </em><em>'series v1'</em><em>, </em><em>'series v2'</em><em>, </em><em>'series both'</em><em>, </em><em>'stop'}</em>) – <ul class="simple">
+<li><p>‘v1’ : Single shot of the v1 valve</p></li>
+<li><p>’v2’ : Single shot of the v2 valve</p></li>
+<li><p>’both’ : Single shot of both valves simultaneously</p></li>
+<li><p>’series v1’ : Series of shots of the v1 valve until num_shots() is reached</p></li>
+<li><p>’series v2’ : Series of shots of the v2 valve until num_shots() is reached</p></li>
+<li><p>’series both’ : Series of shots of both valves until until ‘stop’ is issued</p></li>
+<li><p>’stop’ : Stop any series of shots</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sheetjet.VCMini.num_shots">
+<span class="sig-name descname"><span class="pre">num_shots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">set</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sheetjet/gyger.html#VCMini.num_shots"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sheetjet.VCMini.num_shots" title="Link to this definition"></a></dt>
+<dd><p>Query or set number of shots to fire before stopping. 0 means infinite.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sheetjet.VCMini.open_time">
+<span class="sig-name descname"><span class="pre">open_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">set</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">override_limits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sheetjet/gyger.html#VCMini.open_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sheetjet.VCMini.open_time" title="Link to this definition"></a></dt>
+<dd><p>Query or set valve open time in us.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sheetjet.VCMini.peak_current">
+<span class="sig-name descname"><span class="pre">peak_current</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">set</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sheetjet/gyger.html#VCMini.peak_current"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sheetjet.VCMini.peak_current" title="Link to this definition"></a></dt>
+<dd><p>Query or set peak current.
+If raw is True the function takes a returns directly the parameter D as stated in the manual.
+The actual peak current I_p is given by I_p = 450mA + (D * 50mA).
+If raw is False the function accepts and returns values in Amperes.
+Should be kept at 1 A (meaning value 11).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sheetjet.VCMini.peak_time">
+<span class="sig-name descname"><span class="pre">peak_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">set</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valve</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'both'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">override_limits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sheetjet/gyger.html#VCMini.peak_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sheetjet.VCMini.peak_time" title="Link to this definition"></a></dt>
+<dd><p>Query or set peak current time to initiate valve opening, in us.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sheetjet.VCMini.query">
+<span class="sig-name descname"><span class="pre">query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">param</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sheetjet/gyger.html#VCMini.query"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sheetjet.VCMini.query" title="Link to this definition"></a></dt>
+<dd><p>Send a query command parameters to the controller.
+Query command parameters are defined in the Gyger VC Mini manual.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sheetjet.VCMini.reopen">
+<span class="sig-name descname"><span class="pre">reopen</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sheetjet/gyger.html#VCMini.reopen"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sheetjet.VCMini.reopen" title="Link to this definition"></a></dt>
+<dd><p>Reopen the serial connection.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sheetjet.VCMini.set_parameter">
+<span class="sig-name descname"><span class="pre">set_parameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">param</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sheetjet/gyger.html#VCMini.set_parameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sheetjet.VCMini.set_parameter" title="Link to this definition"></a></dt>
+<dd><p>Send a parametrization command to the controller.
+Parametrization commands are defined in the Gyger VC Mini manual.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sheetjet.VCMini.shot_counter">
+<span class="sig-name descname"><span class="pre">shot_counter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">valve</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sheetjet/gyger.html#VCMini.shot_counter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sheetjet.VCMini.shot_counter" title="Link to this definition"></a></dt>
+<dd><p>Returns the shot counter for the specified valve.</p>
+<p>The shot counter is volatile, at power-on it is set to 0.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sheetjet.VCMini.total_shot_counter">
+<span class="sig-name descname"><span class="pre">total_shot_counter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">valve</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sheetjet/gyger.html#VCMini.total_shot_counter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sheetjet.VCMini.total_shot_counter" title="Link to this definition"></a></dt>
+<dd><p>Returns the total shot counter for the specified valve.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sheetjet.VCMini.trigger_mode">
+<span class="sig-name descname"><span class="pre">trigger_mode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'stop'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sheetjet/gyger.html#VCMini.trigger_mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sheetjet.VCMini.trigger_mode" title="Link to this definition"></a></dt>
+<dd><p>Set the trigger mode.</p>
+<p>While a trigger mode is active, no further entries are possible on the corresponding module.
+Only the command <code class="docutils literal notranslate"><span class="pre">trigger_mode('stop')</span></code> (exit external trigger mode) can be performed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mode</strong> (<em>{'single'</em><em>, </em><em>'pulse'</em><em>, </em><em>'series'</em><em>, </em><em>'pulse series'</em><em>, </em><em>'stop'}</em>) – <ul class="simple">
+<li><p>‘single’ : Arm single shot on valves V1 and V2 triggered via external hardware trigger</p></li>
+<li><p>’pulse’ : Arm single shot on valves V1 and V2 with the opening time controlled by the length of the external hardware trigger</p></li>
+<li><p>’series’ : Arm shot series on valves V1 and V2 triggered via external hardware trigger</p></li>
+<li><p>’pulse series’ : Arm shot series on valves V1 and V2 which continues for as long as the external hardware trigger stays high</p></li>
+<li><p>’stop’ : Exit external trigger mode and disarm all triggers</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sheetjet.VCMini.valve_status">
+<span class="sig-name descname"><span class="pre">valve_status</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sheetjet/gyger.html#VCMini.valve_status"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sheetjet.VCMini.valve_status" title="Link to this definition"></a></dt>
+<dd><p>Returns the active status for each of the two valves as a tuple.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sheetjet.VCMini.zero_shot_counter">
+<span class="sig-name descname"><span class="pre">zero_shot_counter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">valve</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sheetjet/gyger.html#VCMini.zero_shot_counter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sheetjet.VCMini.zero_shot_counter" title="Link to this definition"></a></dt>
+<dd><p>Zero the shot counter for the specified valve.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="mxii.html" class="btn btn-neutral float-left" title="MXII" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tg5012a.html" class="btn btn-neutral float-right" title="TG5012A" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Filipe Maia.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
